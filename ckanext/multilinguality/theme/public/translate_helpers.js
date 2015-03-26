@@ -38,7 +38,8 @@ function TranslateHelper (resource, lang){
         }
         return this.call_ajax(url, options, ld, cb);    
     };
-    this.update = function(col_name, mode, ld, cb) {
+    this.update = function(col_name, mode, ld, cb, col_translation) {
+        var col_translation = col_translation || null;
         console.log('updating..');
         console.log(resource);
         console.log(col_name);
@@ -72,6 +73,16 @@ function TranslateHelper (resource, lang){
                         return;
                     }
                 });
+                /*if (mode === 'title'){
+                        var options = {
+                                resource_id: new_res_id,
+                                column_name: col_name,
+                                mode: mode,
+                                translation: col_translation,
+                            }
+                            return self.call_ajax(url, options, ld, cb); 
+                }*/
+
                 if (field_exists){
                             var html = '<div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Please Confirm Action</h3></div> <div class="modal-body"> <label>Column is already translated. Are you sure you want to override?</label> </div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
 
@@ -88,7 +99,8 @@ function TranslateHelper (resource, lang){
                                 var options = {
                                     resource_id: new_res_id,
                                     column_name: col_name,
-                                    mode: mode
+                                    mode: mode,
+                                    translation: col_translation,
                                 }
                                 return self.call_ajax(url, options, ld, cb); 
                                 });
@@ -99,7 +111,8 @@ function TranslateHelper (resource, lang){
                                 var options = {
                                     resource_id: new_res_id,
                                     column_name: col_name,
-                                    mode: mode
+                                    mode: mode,
+                                    translation: col_translation,
                                 }
                                 return self.call_ajax(url, options, ld, cb); 
                     }

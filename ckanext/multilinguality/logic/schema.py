@@ -85,9 +85,10 @@ def translate_resource_update_schema():
         'column_name': [not_missing, not_empty, unicode],
         'force': [ignore_missing, boolean_validator],
         'mode': [not_missing, unicode, OneOf(
-            ['automatic', 'manual', 'transcription'])],
+            ['automatic', 'manual', 'transcription', 'title'])],
         'status': [ignore_missing, unicode, OneOf(
             ['draft', 'ready'])],
+        'translation': [ignore_missing, unicode],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]
     }

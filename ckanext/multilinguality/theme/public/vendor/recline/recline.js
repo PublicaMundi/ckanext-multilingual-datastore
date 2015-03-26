@@ -4734,10 +4734,18 @@ my.SlickGrid = Backbone.View.extend({
             .appendTo($li);
       }
       $('<li/>').addClass('divider').appendTo($menu); */
+   
+      /*$li = $('<li />').appendTo($menu);
+      $input = $('<input type="checkbox">').data('option', 'title').attr('id','title');
+      $input.appendTo($li);
+      columnCheckboxes.push($input);
+      $('<label />')
+          .text('Translate Title')
+          .appendTo($li);
+      */
       $li = $('<li />').appendTo($menu);
       $input = $('<input type="checkbox" />').data('option', 'translate-automatic').attr('id','translate-automatic');
       columnCheckboxes.push($input);
-
       $input.appendTo($li);
       $('<label />')
           .text('Automatic Translation')
@@ -4796,69 +4804,34 @@ my.SlickGrid = Backbone.View.extend({
           model.trigger('translate-no', column);
 
       }
+        else if ($(e.target).data('option') === 'title'){
+        model.trigger('title', column);
+        }    
         else if ($(e.target).data('option') === 'transcript'){
-        var html = '<div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Transcription options</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> </div></div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
-
-        jQuery("#windowTitleDialog").html(html);
-        jQuery("#windowTitleDialog").modal('show');
-        //var name = string;
-        var ncolumn;
-        jQuery("#okClicked").on('click',function(){
-            jQuery("#windowTitleDialog").modal('hide');
-            var string = jQuery("#xlInput")[0].value;
-            
         model.trigger('transcript', column);
         
-        });
-        jQuery("#closeDialog").on('click',function(){
-            jQuery("#windowTitleDialog").modal('hide');
-        });
-
       }
 
       else if ($(e.target).data('option') === 'translate-manual'){
-        var html = '<div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Manual Translation options</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> </div></div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
-
-        jQuery("#windowTitleDialog").html(html);
-        jQuery("#windowTitleDialog").modal('show');
         //var name = string;
-        var ncolumn;
-        jQuery("#okClicked").on('click',function(){
-            jQuery("#windowTitleDialog").modal('hide');
-            var string = jQuery("#xlInput")[0].value;
-            
         model.trigger('translate-manual', column);
         
-
-        });
-        jQuery("#closeDialog").on('click',function(){
-            jQuery("#windowTitleDialog").modal('hide');
-        });
-
       }
       else if ($(e.target).data('option') === 'translate-automatic'){
-          var html = ' <div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Automatic Translation options</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> <div class="control-group"><label class="control-label"><h4>Select source:</h4></label> <div class="controls"> <select> <option value="geonames">GeoNames</option><option value="wikipedia">Wikipedia</option><option value="osm" >OpenStreet Maps</option></select></div></div> </div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
+          //var html = ' <div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Automatic Translation options</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> <div class="control-group"><label class="control-label"><h4>Select source:</h4></label> <div class="controls"> <select> <option value="geonames">GeoNames</option><option value="wikipedia">Wikipedia</option><option value="osm" >OpenStreet Maps</option></select></div></div> </div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
 
-        jQuery("#windowTitleDialog").html(html);
-        jQuery("#windowTitleDialog").modal('show');
-        //var name = string;
-        jQuery("#okClicked").on('click',function(){
-            jQuery("#windowTitleDialog").modal('hide');
-            var string = jQuery("#xlInput")[0].value;
+        //jQuery("#windowTitleDialog").html(html);
+        //jQuery("#windowTitleDialog").modal('show');
+        //jQuery("#okClicked").on('click',function(){
+        //    jQuery("#windowTitleDialog").modal('hide');
+        //    var string = jQuery("#xlInput")[0].value;
             
         model.trigger('translate-auto', column);
 
-        });
-        jQuery("#closeDialog").on('click',function(){
-            jQuery("#windowTitleDialog").modal('hide');
-        });
-
-
-        
-  
-        //var name = column.name+'-el';
-        
-        //var columns = grid.getColumns();
+        //});
+        //jQuery("#closeDialog").on('click',function(){
+        //    jQuery("#windowTitleDialog").modal('hide');
+        //});
         
       }
 

@@ -25,6 +25,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     p.implements(p.IConfigurer, inherit=True)
     p.implements(p.IResourcePreview, inherit=True)
     p.implements(p.IActions)
+    p.implements(p.IMapper)
     p.implements(p.IRoutes, inherit=True)
     p.implements(p.IAuthFunctions)
     p.implements(p.IPackageController, inherit=True)
@@ -56,11 +57,14 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 controller='ckanext.recline.controllers.package:UserController',
                 action = 'resource_translate')
                     #action='resource_translate')
+        #mapper.connect('/translate/dump/{resource_id}/{language}',
+        #          controller='ckanext.multilinguality.controller:DatastoreController',
+        #          action='dump')
 
             #controller='ckanext.spatial.controllers.api:ApiController',
             #action='spatial_query')
         return mapper
-
+    
     def before_view(self, data_dict):
         print 'BEFORE VIEW'
         #language = request.environ['CKAN_LANG']
@@ -71,6 +75,16 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         #resources[1] = t
         #data_dict.update({'resources':resources})
         return data_dict
+
+    def after_update(self, mapper, connection, instance):
+        pass
+    def before_update(self, mapper, connection, instance):
+
+        print 'BEFORE UPDATE'
+
+    
+    def before_delete(self, mapper, connection, instance):
+        print 'BEFORE DELETE'
 
     def after_show(self, context, data_dict):
         # TODO: Need to cut extra translation resources here

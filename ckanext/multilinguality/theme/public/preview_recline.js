@@ -99,8 +99,9 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         catch(err) {
             
         }
+        var orig_lang = resourceData.resource_language || 'en';
         //resourceData = translate.delete(function() {}, function() { });
-        if (trans_lang === undefined  && !("translation_resource" in resourceData)){
+        if (trans_lang === undefined  && !("translation_resource" in resourceData) && (orig_lang !=lang)){
             //translate.create(self.onLoad, self.onComplete);    
             resourceData = translate.create(function() {}, function() { window.location.reload() });
         }
@@ -212,7 +213,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
                         //jQuery(columns).each(function(col, idx){
                 });
         });
-        repaint(columns);
+        //repaint(columns);
     };
     onLoad = function(){
         dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: true});
@@ -241,12 +242,44 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
 
                         });
 
+                        var html = '<div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Tranlate Column Title</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> </div></div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
+                        jQuery("#windowTitleDialog").html(html);
+                        
+                        jQuery("#closeDialog").on('click',function(){
+                                jQuery("#windowTitleDialog").modal('hide');
+                            });
+
+                        dataset.bind('title', function(col){
+
+                            jQuery("#windowTitleDialog").modal('show');
+                            jQuery("#okClicked").on('click',function(){
+                                jQuery("#windowTitleDialog").modal('hide');
+                                var col_translation = jQuery("#xlInput")[0].value;
+                                translate.update(col.name, 'title', onLoad, onComplete, col_translation);
+
+                            });
+                            
+                        });
                         dataset.bind('translate-manual', function(col){
-                            translate.update(col.name, 'manual', onLoad, onComplete);
+                            jQuery("#windowTitleDialog").modal('show');
+                            jQuery("#okClicked").on('click',function(){
+                                jQuery("#windowTitleDialog").modal('hide');
+                                var col_translation = jQuery("#xlInput")[0].value;
+                                translate.update(col.name, 'manual', onLoad, onComplete, col_translation);
+
+                            });
+
 
                         });
                         dataset.bind('transcript', function(col){
-                            translate.update(col.name, 'transcription', onLoad, onComplete);
+                            jQuery("#windowTitleDialog").modal('show');
+                            jQuery("#okClicked").on('click',function(){
+                                jQuery("#windowTitleDialog").modal('hide');
+                                var col_translation = jQuery("#xlInput")[0].value;
+                                translate.update(col.name, 'transcription', onLoad, onComplete, col_translation);
+
+                            });
+
                         });
                         dataset.bind('translate-auto', function(col){
                             //TODO
