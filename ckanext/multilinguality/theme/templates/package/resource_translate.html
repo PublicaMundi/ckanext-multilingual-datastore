@@ -1,18 +1,40 @@
-{% extends "dataviewer/base.html" %}
+{% extends "package/resource_read.html" %}
 
-{% block page %}
-<div id="windowTitleDialog" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
-        </div>
-        <!-- <a data-toggle="modal" id="button" href="#windowTitleDialog" class="btn btn-primary btn-large">Click</a> -->
-<div id="saveButtons" style="float:right"></div>
-<div data-module="reclinepreview" data-module-site_url="{{ h.dump_json(h.url('/', locale='default', qualified=true)) }}">
-      
-          <h4 class="loading-dialog">
-      <div class="loading-spinner"></div>
-      <div class="left">{{ _('Loading...') }}</div>
-    </h4>
-  </div>
-  <div id="popup"></div>
-
-  {% resource 'ckanext-reclinepreview/main' %}
+{% set resource = c.resource %}
+{% set resource_id = c.resource.id %}
+{% set name_or_id = c.package.id %}
+{% set pkg_dict = c.package %}
+{% block breadcrumb_content %}
+  {{ super() }}
+  <li class="active"><a href="">{{ _('Translation') }}</a></li>
 {% endblock %}
+
+{% block pre_primary %}
+
+    {% block resource %}
+    <section class="module module-resource">
+      <div class="module-content">
+        <div class="actions">
+          {% block resource_actions %}
+          <ul>
+            {% block resource_actions_inner %}
+            <li>{% link_for _('View resource'), controller='package', action='resource_read', id=name_or_id, resource_id=resource.id, class_='btn', icon='eye-open' %}</li>
+            {% endblock %}
+          </ul>
+          {% endblock %}
+        </div>
+        {% block resource_content %}
+        {{ super() }}
+        {% endblock %}
+
+        <iframe src="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_datapreview', resource_id=resource_id, id=name_or_id) }}" frameborder="0" width="100%"  data-module="data-viewer">
+        <p>{{ _('Your browser does not support iframes.') }}</p>
+        </iframe>
+    </div>
+   </div>
+   </section>
+  {% endblock %}
+{% endblock %}
+
+
+  

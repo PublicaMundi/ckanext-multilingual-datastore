@@ -1,0 +1,20 @@
+{% set languages = h.get_translations(res)%}
+
+    <p class="languages">
+    <ul class="dataset-resources unstyled">
+    {% if res.has_translations %}
+        {% for lang in languages %}
+        <li>
+          <a class="label"
+              href="
+               {{ h.url_for(controller='package', action='resource_read', id=pkg.name, resource_id=res.id, locale=lang) }} 
+              "
+            data-format="{{ lang }}"
+           >{{ lang|upper }}</a>
+        </li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+
+    </p>
+

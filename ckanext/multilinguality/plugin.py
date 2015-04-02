@@ -4,6 +4,7 @@ import ckan.plugins as p
 import ckan.plugins.toolkit as toolkit
 from ckan.common import request
 from routes.mapper import SubMapper
+import ckan.model as model
 
 import ckanext.multilinguality.logic.action as action
 import ckanext.multilinguality.logic.auth as auth
@@ -25,10 +26,10 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     p.implements(p.IConfigurer, inherit=True)
     p.implements(p.IResourcePreview, inherit=True)
     p.implements(p.IActions)
-    p.implements(p.IMapper)
     p.implements(p.IRoutes, inherit=True)
     p.implements(p.IAuthFunctions)
     p.implements(p.IPackageController, inherit=True)
+    p.implements(p.ITemplateHelpers)
 
     def update_config(self, config):
         ''' Set up the resource library, public directory and
@@ -36,7 +37,13 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         '''
         toolkit.add_public_directory(config, 'theme/public')
         toolkit.add_template_directory(config, 'theme/templates')
-        toolkit.add_resource('theme/public', 'ckanext-reclinepreview')
+        toolkit.add_resource('theme/public', 'ckanext-multilinguality')
+
+    def get_helpers(self):
+        return {
+                #'resource_edit': resource_edit,
+                'get_translations': self.get_translations,
+                }
 
     def can_preview(self, data_dict):
         # if the resource is in the datastore then we can preview it with recline
@@ -46,25 +53,26 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         return format_lower in ['csv', 'xls', 'tsv']
 
     def preview_template(self, context, data_dict):
-        return 'recline.html'
+        return 'recline_read.html'
 
     def before_map(self, mapper):
-        
-        #with SubMapper(mapper, controller=package_controller) as m:
         mapper.connect(
                 'resource_translate',
-                '/dataset/{name_or_id}/resource_translate/{resource_id}',
-                controller='ckanext.recline.controllers.package:UserController',
+                '/dataset/{id}/resource_translate/{resource_id}',
+                controller='ckanext.multilinguality.controllers.package:UserController',
                 action = 'resource_translate')
-                    #action='resource_translate')
+
+        mapper.connect(
+                '/dataset/{id}/resource_translate_inner/{resource_id}',
+                controller='ckanext.multilinguality.controllers.package:UserController',
+                action = 'resource_datapreview')
+
         #mapper.connect('/translate/dump/{resource_id}/{language}',
         #          controller='ckanext.multilinguality.controller:DatastoreController',
         #          action='dump')
 
-            #controller='ckanext.spatial.controllers.api:ApiController',
-            #action='spatial_query')
         return mapper
-    
+
     def before_view(self, data_dict):
         print 'BEFORE VIEW'
         #language = request.environ['CKAN_LANG']
@@ -76,15 +84,12 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         #data_dict.update({'resources':resources})
         return data_dict
 
-    def after_update(self, mapper, connection, instance):
-        pass
-    def before_update(self, mapper, connection, instance):
+    def after_update(self, context, data_dict):
+        print 'AFTERT UPDATE'
+        return data_dict
 
-        print 'BEFORE UPDATE'
-
-    
-    def before_delete(self, mapper, connection, instance):
-        print 'BEFORE DELETE'
+    def after_delete(self, context, data_dict):
+        print 'AFTER DELETE'
 
     def after_show(self, context, data_dict):
         # TODO: Need to cut extra translation resources here
@@ -121,6 +126,31 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 'translate_resource_delete': action.translate_resource_delete,
                 'translate_resource_publish': action.translate_resource_publish,
                 }
+
+    def get_translations(self, res):
+        orig_lang = res.get('resource_language', None)
+        print 'translation'
+        print (orig_lang)
+        if not orig_lang:
+            return None
+        #return 
+        #json.loads(res.get('has_translations','u{'+orig_lang+'}'))
+        translations = json.loads(res.get('has_translations', u'{}'))
+        context = {
+                'model':model,
+                'session':model.Session,
+                'ignore_auth':True,
+                'api_version':3,
+                }
+        published_langs = [orig_lang]
+        for lang,id in translations.iteritems():
+            trans_res = toolkit.get_action('resource_show')(context, {'id':id})
+            print 'trans res'
+            print trans_res
+            if trans_res.get('translation_status') == 'published':
+                published_langs.append(lang)
+        return published_langs
+
 
     def get_auth_functions(self):
         return {

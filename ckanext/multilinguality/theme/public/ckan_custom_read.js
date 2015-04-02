@@ -328,9 +328,9 @@ if (isNodeModule) {
 // Set the url attribute of the dataset to point to the Resource on the CKAN instance. The endpoint and id will then be automatically computed.
 var recline = recline || {};
 recline.Backend = recline.Backend || {};
-recline.Backend.CkanEdit = recline.Backend.CkanEdit || {};
+recline.Backend.CkanRead = recline.Backend.CkanRead || {};
 (function(my) {
-  my.__type__ = 'ckanedit';
+  my.__type__ = 'ckanread';
 
   // private - use either jQuery or Underscore Deferred depending on what is available
   var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
@@ -338,6 +338,8 @@ recline.Backend.CkanEdit = recline.Backend.CkanEdit || {};
   // ### fetch
   my.fetch = function(dataset) {
     var dfd = new Deferred();
+    console.log('hereo');
+    console.log(dataset);
 
     my.query({}, dataset)
       .done(function(data, lala) {
@@ -436,5 +438,5 @@ recline.Backend.CkanEdit = recline.Backend.CkanEdit || {};
       return dfd.promise();
 
   };
-}(recline.Backend.CkanEdit));
+}(recline.Backend.CkanRead));
 

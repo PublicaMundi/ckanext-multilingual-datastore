@@ -129,6 +129,7 @@ this.recline.Backend.Ckan = this.recline.Backend.Ckan || {};
       return jqxhr;
     };
 
+    
     return that;
   };
 
@@ -2179,7 +2180,7 @@ my.Flot = Backbone.View.extend({
 
     var grid = {};
     grid.hoverable = true;
-    grid.clickable = true;
+    grid.clickable = false;
     grid.borderColor = "#aaaaaa";
     grid.borderWidth = 1;
 
@@ -3141,6 +3142,7 @@ my.GridRow = Backbone.View.extend({
   ',
 
   onEditClick: function(e) {
+      //console.log('edit click?');
     var editing = this.el.find('.data-table-cell-editor-editor');
     if (editing.length > 0) {
       editing.parents('.data-table-cell-value').html(editing.text()).siblings('.data-table-cell-edit').removeClass("hidden");
@@ -3950,12 +3952,12 @@ my.MultiView = Backbone.View.extend({
       </div> \
       <div class="menu-right"> \
         <div class="btn-group" data-toggle="buttons-checkbox"> \
-          {{#sidebarViews}} \
+         <!-- {{#sidebarViews}} \
           <a href="#" data-action="{{id}}" class="btn">{{label}}</a> \
-          {{/sidebarViews}} \
+          {{/sidebarViews}} -->\
         </div> \
       </div> \
-      <div class="query-editor-here" style="display:inline;"></div> \
+      <!-- <div class="query-editor-here" style="display:inline;"></div> -->\
     </div> \
     <div class="data-view-sidebar"></div> \
     <div class="data-view-container"></div> \
@@ -3963,7 +3965,8 @@ my.MultiView = Backbone.View.extend({
   ',
   events: {
     'click .menu-right a': '_onMenuClick',
-    'click .navigation a': '_onSwitchView'
+    'click .navigation a': '_onSwitchView',
+    'click #translate-btn': '_onTranslateClick'
   },
 
   initialize: function(options) {
@@ -4133,7 +4136,6 @@ my.MultiView = Backbone.View.extend({
       $dataSidebar.hide();
     }
   },
-
   updateNav: function(pageName) {
     this.el.find('.navigation a').removeClass('active');
     var $el = this.el.find('.navigation a[data-view="' + pageName + '"]');
@@ -4182,6 +4184,17 @@ my.MultiView = Backbone.View.extend({
     var viewName = $(e.target).attr('data-view');
     this.updateNav(viewName);
     this.state.set({currentView: viewName});
+  },
+  _onTranslateClick: function(e){
+    e.preventDefault();
+    //console.log('Translate button clicked!');
+    if (this.mode == "default"){
+        this.mode = "translate";
+    }
+    else{
+        this.mode = "default";
+    }
+
   },
 
   // create a state object for this view and do the job of
@@ -4399,6 +4412,7 @@ my.setHashQueryString = function(queryParams) {
 })(jQuery, recline.View);
 
 /*jshint multistr:true */
+/* HELLO CHANGES */
 
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
@@ -4436,10 +4450,14 @@ my.SlickGrid = Backbone.View.extend({
     this.el = $(this.el);
     this.el.addClass('recline-slickgrid');
     _.bindAll(this, 'render');
+    
+   //console.log('hello');
+    //console.log(this);
     this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
     this.model.records.bind('change', this.onRecordChanged, this);
+   // this.model.on('translate-manual', this.custom);
 
     var state = _.extend({
         hiddenColumns: [],
@@ -4455,15 +4473,12 @@ my.SlickGrid = Backbone.View.extend({
     this.state = new recline.Model.ObjectState(state);
   },
 
-  events: {
-  },
-
   onRecordChanged: function(record) {
     // Ignore if the grid is not yet drawn
     if (!this.grid) {
       return;
     }
-
+    //console.log(record);
     // Let's find the row corresponding to the index
     var row_index = this.grid.getData().getModelRow( record );
     this.grid.invalidateRow(row_index);
@@ -4479,16 +4494,20 @@ my.SlickGrid = Backbone.View.extend({
       enableColumnReorder: true,
       explicitInitialization: true,
       syncColumnCellResize: true,
-      forceFitColumns: this.state.get('fitColumns')
+      //editable: true,
+      autoEdit: false,
+      //forceFitColumns: this.state.get('fitColumns')
+      //forceFitColumns: true
     }, self.state.get('gridOptions'));
-
     // We need all columns, even the hidden ones, to show on the column picker
     var columns = [];
     // custom formatter as default one escapes html
     // plus this way we distinguish between rendering/formatting and computed value (so e.g. sort still works ...)
     // row = row index, cell = cell index, value = value, columnDef = column definition, dataContext = full row values
     var formatter = function(row, cell, value, columnDef, dataContext) {
+        
       var field = self.model.fields.get(columnDef.id);
+
       if (field.renderer) {
         return field.renderer(value, field, dataContext);
       } else {
@@ -4501,10 +4520,16 @@ my.SlickGrid = Backbone.View.extend({
         name: field.label,
         field: field.id,
         sortable: true,
-        minWidth: 80,
-        formatter: formatter
+        resizable: true,
+        rerenderOnResize: true,
+        minWidth: 0,
+        width: 80,
+        //state: field.state,
+        defaultSortAsc: true,
+        //editor: Slick.Editors.Text
+        
       };
-
+        
       var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column === field.id;});
       if (widthInfo){
         column.width = widthInfo.width;
@@ -4516,6 +4541,7 @@ my.SlickGrid = Backbone.View.extend({
       }
       columns.push(column);
     });
+    
 
     // Restrict the visible columns
     var visibleColumns = columns.filter(function(column) {
@@ -4548,6 +4574,7 @@ my.SlickGrid = Backbone.View.extend({
       self.model.fields.each(function(field){
         row[field.id] = m.getFieldValueUnrendered(field);
       });
+
       return row;
     }
 
@@ -4566,6 +4593,7 @@ my.SlickGrid = Backbone.View.extend({
       this.getModel = function(index) {return models[index];};
       this.getModelRow = function(m) {return models.indexOf(m);};
       this.updateItem = function(m,i) {
+        //rows[i] = toRow(m, m);
         rows[i] = toRow(m);
         models[i] = m;
       };
@@ -4574,8 +4602,9 @@ my.SlickGrid = Backbone.View.extend({
     var data = new RowSet();
 
     this.model.records.each(function(doc){
-      data.push(doc, toRow(doc));
+        data.push(doc, toRow(doc));
     });
+
 
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 
@@ -4615,17 +4644,20 @@ my.SlickGrid = Backbone.View.extend({
     this.grid.onCellChange.subscribe(function (e, args) {
       // We need to change the model associated value
       //
+      ////console.log(args);
       var grid = args.grid;
       var model = data.getModel(args.row);
+      //console.log(model);
+      //console.log('after model');
       var field = grid.getColumns()[args.cell].id;
       var v = {};
       v[field] = args.item[field];
       model.set(v);
     });
 
-    var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
+    var columnpicker = new Slick.Controls.TColumnPicker(this.model, columns, this.grid,
                                                        _.extend(options,{state:this.state}));
-
+            
     if (self.visible){
       self.grid.init();
       self.rendered = true;
@@ -4656,6 +4688,206 @@ my.SlickGrid = Backbone.View.extend({
 });
 
 })(jQuery, recline.View);
+
+
+(function ($) {
+  function TranslateColumnPicker(model, columns, grid, options) {
+    var $menu;
+    var columnCheckboxes;
+    var column;
+    var modelo;
+    var defaults = {
+      fadeSpeed:250
+    };
+
+    function init() {
+      grid.onHeaderContextMenu.subscribe(handleHeaderContextMenu);
+      options = $.extend({}, defaults, options);
+
+      $menu = $('<ul class="dropdown-menu slick-contextmenu" style="display:none;position:absolute;z-index:20;" />').appendTo(document.body);
+
+      $menu.bind('mouseleave', function (e) {
+        $(this).fadeOut(options.fadeSpeed);
+      });
+      $menu.bind('click', updateColumn);
+
+    }
+
+    function handleHeaderContextMenu(e, args) {
+      e.preventDefault();
+      $menu.empty();
+      columnCheckboxes = [];
+      //console.log(args);
+      var $li, $input;
+      /* for (var i = 0; i < columns.length; i++) {
+        $li = $('<li />').appendTo($menu);
+        $input = $('<input type="checkbox" />').data('column-id', columns[i].id).attr('id','slick-column-vis-'+columns[i].id);
+        columnCheckboxes.push($input);
+
+        if (grid.getColumnIndex(columns[i].id) !== null) {
+          $input.attr('checked', 'checked');
+        }
+        $input.appendTo($li);
+        $('<label />')
+            .text(columns[i].name)
+            .attr('for','slick-column-vis-'+columns[i].id)
+            .appendTo($li);
+      }
+      $('<li/>').addClass('divider').appendTo($menu); */
+   
+      /*$li = $('<li />').appendTo($menu);
+      $input = $('<input type="checkbox">').data('option', 'title').attr('id','title');
+      $input.appendTo($li);
+      columnCheckboxes.push($input);
+      $('<label />')
+          .text('Translate Title')
+          .appendTo($li);
+      */
+      $li = $('<li />').appendTo($menu);
+      $input = $('<input type="checkbox" />').data('option', 'translate-automatic').attr('id','translate-automatic');
+      columnCheckboxes.push($input);
+      $input.appendTo($li);
+      $('<label />')
+          .text('Automatic Translation')
+          .appendTo($li);
+      $('</input>').appendTo($li);      
+      
+      $li = $('<li />').appendTo($menu);
+      $input = $('<input type="checkbox">').data('option', 'translate-manual').attr('id','translate-manual');
+      $input.appendTo($li);
+      columnCheckboxes.push($input);
+      $('<label />')
+          .text('Manual Translation')
+          .appendTo($li);
+      
+      $li = $('<li />').appendTo($menu);
+      $input = $('<input type="checkbox">').data('option', 'transcript').attr('id','transcript');
+      $input.appendTo($li);
+      columnCheckboxes.push($input);
+      $('<label />')
+          .text('Transcription')
+          .appendTo($li);
+
+      $li = $('<li />').appendTo($menu);
+      $input = $('<input type="checkbox">').data('option', 'translate-no').attr('id','translate-no');
+      columnCheckboxes.push($input);
+      $input.appendTo($li);
+      $('<label />')
+          .text('Non Translatable')
+          .appendTo($li);
+
+      /* $li = $('<li />').data('option', 'autoresize').appendTo($menu);
+      $input = $('<input type="checkbox" />').data('option', 'autoresize').attr('id','slick-option-autoresize');
+      $input.appendTo($li);
+      $('<label />')
+          .text('Force fit columns')
+          .attr('for','slick-option-autoresize')
+          .appendTo($li);
+      if (grid.getOptions().forceFitColumns) {
+        $input.attr('checked', 'checked');
+      }
+        */
+      $menu.css('top', e.pageY - 10)
+          .css('left', e.pageX - 10)
+          .fadeIn(options.fadeSpeed);
+        column = args.column;
+    }
+
+    function updateColumn(e) {
+        console.log('updatiiiing');
+        console.log(column.state);
+        //console.log('col');
+        //console.log(column);
+      var checkbox;
+      if ($(e.target).data('option') === 'translate-no' ){
+          //alert('non translatable');
+          model.trigger('translate-no', column);
+
+      }
+        else if ($(e.target).data('option') === 'title'){
+        model.trigger('title', column);
+        }    
+        else if ($(e.target).data('option') === 'transcript'){
+        model.trigger('transcript', column);
+        
+      }
+
+      else if ($(e.target).data('option') === 'translate-manual'){
+        //var name = string;
+        model.trigger('translate-manual', column);
+        
+      }
+      else if ($(e.target).data('option') === 'translate-automatic'){
+          //var html = ' <div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Automatic Translation options</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> <div class="control-group"><label class="control-label"><h4>Select source:</h4></label> <div class="controls"> <select> <option value="geonames">GeoNames</option><option value="wikipedia">Wikipedia</option><option value="osm" >OpenStreet Maps</option></select></div></div> </div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
+
+        //jQuery("#windowTitleDialog").html(html);
+        //jQuery("#windowTitleDialog").modal('show');
+        //jQuery("#okClicked").on('click',function(){
+        //    jQuery("#windowTitleDialog").modal('hide');
+        //    var string = jQuery("#xlInput")[0].value;
+            
+        model.trigger('translate-auto', column);
+
+        //});
+        //jQuery("#closeDialog").on('click',function(){
+        //    jQuery("#windowTitleDialog").modal('hide');
+        //});
+        
+      }
+
+      if ($(e.target).data('option') === 'autoresize') {
+        var checked;
+        if ($(e.target).is('li')){
+            checkbox = $(e.target).find('input').first();
+            checked = !checkbox.is(':checked');
+            checkbox.attr('checked',checked);
+        } else {
+          checked = e.target.checked;
+        }
+
+        if (checked) {
+          grid.setOptions({forceFitColumns:true});
+          grid.autosizeColumns();
+        } else {
+          grid.setOptions({forceFitColumns:false});
+        }
+        options.state.set({fitColumns:checked});
+        return;
+      }
+    /*
+      if (($(e.target).is('li') && !$(e.target).hasClass('divider')) ||
+            $(e.target).is('input')) {
+        if ($(e.target).is('li')){
+            checkbox = $(e.target).find('input').first();
+            checkbox.attr('checked',!checkbox.is(':checked'));
+        }
+        var visibleColumns = [];
+        var hiddenColumnsIds = [];
+        $.each(columnCheckboxes, function (i, e) {
+          if ($(this).is(':checked')) {
+            visibleColumns.push(columns[i]);
+          } else {
+            hiddenColumnsIds.push(columns[i].id);
+          }
+        });
+
+        if (!visibleColumns.length) {
+          $(e.target).attr('checked', 'checked');
+          return;
+        }
+
+        grid.setColumns(visibleColumns);
+        options.state.set({hiddenColumns:hiddenColumnsIds});
+      }
+      */
+    }
+    init();
+  }
+  // Slick.Controls.ColumnPicker
+    $.extend(true, window, { Slick:{ Controls:{ TColumnPicker:TranslateColumnPicker }}});
+})(jQuery);
+
+
 
 /*
 * Context menu for the column picker, adapted from
@@ -4722,8 +4954,10 @@ my.SlickGrid = Backbone.View.extend({
     }
 
     function updateColumn(e) {
+      //console.log('update column');
       var checkbox;
-
+      //console.log(column);
+      //console.log(columns);
       if ($(e.target).data('option') === 'autoresize') {
         var checked;
         if ($(e.target).is('li')){
@@ -4771,9 +5005,8 @@ my.SlickGrid = Backbone.View.extend({
     }
     init();
   }
-
   // Slick.Controls.ColumnPicker
-  $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
+    $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
 })(jQuery);
 /*jshint multistr:true */
 
@@ -5463,14 +5696,17 @@ my.Pager = Backbone.View.extend({
     this.render();
   },
   onFormSubmit: function(e) {
+      console.log('onformsubmit');
     e.preventDefault();
     var newFrom = parseInt(this.el.find('input[name="from"]').val());
     var newSize = parseInt(this.el.find('input[name="to"]').val()) - newFrom;
     newFrom = Math.max(newFrom, 0);
     newSize = Math.max(newSize, 1);
     this.model.set({size: newSize, from: newFrom});
+    this.model.trigger('save');
   },
   onPaginationUpdate: function(e) {
+    console.log('onppagination update');
     e.preventDefault();
     var $el = $(e.target);
     var newFrom = 0;
@@ -5481,6 +5717,9 @@ my.Pager = Backbone.View.extend({
     }
     newFrom = Math.max(newFrom, 0);
     this.model.set({from: newFrom});
+    console.log('model!');
+    this.model.trigger('save');
+    console.log(this);
   },
   render: function() {
     var tmplData = this.model.toJSON();

@@ -392,7 +392,13 @@ recline.Backend.CkanEdit = recline.Backend.CkanEdit || {};
     
     //queryObj.translation_column = dataset.translation_column;
     queryObj.translation_language = dataset.translation_language;
-    queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
+    try{
+            queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
+        }
+        catch(err) {
+            queryObj.translation_resource = {}
+            
+        }
     //wrapper.datastoreUpdate(queryObj,function(err, out){
     //});
     wrapper.datastoreQuery(queryObj, function(err, out) {

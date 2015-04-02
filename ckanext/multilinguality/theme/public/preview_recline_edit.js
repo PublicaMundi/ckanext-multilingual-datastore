@@ -20,7 +20,6 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         console.log(jQuery("html")[0].getAttribute('lang'));
       jQuery.proxyAll(this, /_on/);
       // hack to make leaflet use a particular location to look for images
-      L.Icon.Default.imagePath = this.options.site_url + 'vendor/leaflet/0.4.4/images';
       this.button = jQuery("#button");
       var html = '<a href="#" class="btn" id="saveClicked">Save</a> <a href="#" class="btn btn-primary" id="publishClicked">Publish</a>';
 
@@ -100,15 +99,21 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
             
         }
         var orig_lang = resourceData.resource_language || 'en';
+        console.log('trasn');
+        console.log(trans_lang);
+        console.log(resourceData);
         //resourceData = translate.delete(function() {}, function() { });
-        if (trans_lang === undefined  && !("translation_resource" in resourceData) && (orig_lang !=lang)){
-            //translate.create(self.onLoad, self.onComplete);    
+        if (orig_lang == lang){
+            alert('Cannot translate in origin language');
+        }
+        else if (trans_lang === undefined  && !("translation_resource" in resourceData)){
+            //translate.create(self.onLoad, self.onComplete);   
+            // perform this in a function that starts with _on in order to reproxy
             resourceData = translate.create(function() {}, function() { window.location.reload() });
         }
         else{
 
         var translationResource = null;
-        
         this.initializeDataset(dataset, resourceData);
         }
       } 
@@ -254,7 +259,9 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
                             jQuery("#windowTitleDialog").modal('show');
                             jQuery("#okClicked").on('click',function(){
                                 jQuery("#windowTitleDialog").modal('hide');
-                                var col_translation = jQuery("#xlInput")[0].value;
+                                //var col_translation = jQuery("#xlInput")[0].value;
+                                console.log('title???');
+                                var col_translation = '';
                                 translate.update(col.name, 'title', onLoad, onComplete, col_translation);
 
                             });
