@@ -1,8 +1,8 @@
-{% set languages = h.get_translations(res)%}
+{% set languages = h.get_resource_languages(res)%}
 
     <p class="languages">
     <ul class="dataset-resources unstyled">
-    {% if res.has_translations %}
+    {% if languages %}
         {% for lang in languages %}
         <li>
           <a class="label"

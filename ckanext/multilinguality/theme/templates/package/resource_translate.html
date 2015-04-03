@@ -4,11 +4,21 @@
 {% set resource_id = c.resource.id %}
 {% set name_or_id = c.package.id %}
 {% set pkg_dict = c.package %}
+{% set languages = h.get_resource_languages(resource) %}
+{% set language = c.resource_language %}
+
 {% block breadcrumb_content %}
   {{ super() }}
   <li class="active"><a href="">{{ _('Translation') }}</a></li>
 {% endblock %}
 
+{% block resource_languages %}
+{{ _('Translating resource in language:') }}
+<ul class="dataset-resources unstyled">
+<li><a class="label ">{{ language|upper }}</a></li>
+</ul>
+
+{% endblock %}
 {% block pre_primary %}
 
     {% block resource %}
@@ -19,6 +29,7 @@
           <ul>
             {% block resource_actions_inner %}
             <li>{% link_for _('View resource'), controller='package', action='resource_read', id=name_or_id, resource_id=resource.id, class_='btn', icon='eye-open' %}</li>
+            <li>{% link_for _('Edit'), controller='package', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
             {% endblock %}
           </ul>
           {% endblock %}
@@ -27,7 +38,7 @@
         {{ super() }}
         {% endblock %}
 
-        <iframe src="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_datapreview', resource_id=resource_id, id=name_or_id) }}" frameborder="0" width="100%"  data-module="data-viewer">
+        <iframe src="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_datapreview', resource_id=resource_id, id=name_or_id, language=language) }}" frameborder="0" width="100%"  data-module="data-viewer">
         <p>{{ _('Your browser does not support iframes.') }}</p>
         </iframe>
     </div>

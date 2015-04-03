@@ -81,7 +81,7 @@ def translate_resource_create_schema():
 
 def translate_resource_update_schema():
     schema = {
-        'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
+        'resource_id': [not_missing, not_empty, unicode],
         'column_name': [not_missing, not_empty, unicode],
         'force': [ignore_missing, boolean_validator],
         'mode': [not_missing, unicode, OneOf(

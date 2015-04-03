@@ -71,7 +71,11 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
       }
       var dataset; 
       //, errorMsg;
-      var lang = jQuery("html")[0].getAttribute('lang');
+      //var lang = jQuery("html")[0].getAttribute('lang');
+      var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
+      console.log('LANG!!!!!!');
+      console.log(lang);
+          //getAttribute('lang');
       // Datastore
       if (resourceData.datastore_active) {
         if (!("translation_resource" in resourceData)){
@@ -109,7 +113,10 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         else if (trans_lang === undefined  && !("translation_resource" in resourceData)){
             //translate.create(self.onLoad, self.onComplete);   
             // perform this in a function that starts with _on in order to reproxy
-            resourceData = translate.create(function() {}, function() { window.location.reload() });
+            resourceData = translate.create(function() {}, function() { 
+                //window.location.reload() 
+                self._onCreateNew(dataset, resourceData)
+            });
         }
         else{
 
@@ -139,6 +146,12 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
             showError(errorMsg);
           });
       }
+    },
+    _onCreateNew: function(dataset, resourceData) {
+        var translationResource = null;
+        this.initializeDataset(dataset, resourceData);
+        console.log('create new');
+        console.log(resourceData);
     },
     initializeDataset: function(dataset, resourceData) {
         var self = this;
@@ -182,7 +195,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
             
         //dataExplorer.clearNotifications();
         //var selfi = this;
-        var lang = jQuery("html")[0].getAttribute('lang');
+        var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
         dataExplorer.model.fetch().done(function(dataset){
             console.log('data');
             console.log(dataset);
@@ -319,7 +332,8 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
     
     getEditor: function(column) {
 
-        var lang = jQuery("html")[0].getAttribute('lang');
+        //var lang = jQuery("html")[0].getAttribute('lang');
+        var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
         var extra = '-' + lang;
         var pos = column.name.indexOf(extra);
         if (pos > -1){

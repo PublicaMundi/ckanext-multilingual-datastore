@@ -192,7 +192,6 @@ def translate_resource_delete(context, data_dict):
         raise p.toolkit.ValidationError(errors)
 
     res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
-
     if not res.get('translation_resource'):
         raise p.toolkit.ValidationError('Resource "{0}" is not a translation resource'.format(res.get('id')))
 
@@ -236,6 +235,7 @@ def translate_resource_delete(context, data_dict):
                 'translation_columns':res.get('translation_columns'),
                 })
 
+        print 'ASDASADSD'
         filters = {col_name:'*'}
         #la = _delete_column(context, data_dict.get('column_name'), ds, total)
         #return

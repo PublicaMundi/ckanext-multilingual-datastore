@@ -3,12 +3,15 @@
 {% set res = c.resource %}
 {% set pkg = c.package %}
 {% set translation_resource = res.translation_resource or False %}
+{% set languages = h.get_resource_languages(res) %}
 
 {% block resource_read_title %}
 {{ super() }}
+{% block resource_languages %}
 {{ _('Resource language:') }}
 <ul class="dataset-resources unstyled">
-{% if h.lang() in h.get_translations(res) %}
+    
+{% if languages and h.lang() in languages %}
 <li><a class="label ">{{ h.lang()|upper }}</a></li>
 {% else %}
 <li><a class="label">{{ res.resource_language|upper }}</a></li>
@@ -17,10 +20,8 @@
 {{ _('Available languages:') }}
 {% snippet 'package/snippets/resource_languages.html', pkg=pkg, res=res %}
 {% endblock %}
+{% endblock %}
 {% block resource_actions_inner %}
 {{ super() }}
-{% if h.check_access('package_update', {'id':pkg.id }) and not translation_resource %}
-<li>{% link_for  _('Translate'), controller='ckanext.multilinguality.controllers.package:UserController', action='resource_translate', resource_id=res.id, id=pkg.name, class_='btn', icon='flag' %}</li>
-{% endif %}
 {% endblock %}
           

@@ -8,18 +8,18 @@ NotFound = toolkit.ObjectNotFound
 NotAuthorized = toolkit.NotAuthorized
 
 class UserController(BaseController):
-    def resource_translate(self, resource_id, id):
+    def resource_translate(self, resource_id, id, language):
         #user_dict = self._check_access()
         #self._setup_template_variables(user_dict)
         print 'EEEEEEE'
         print resource_id
         pkg_dict = self._check_pkg_access(id)
         res = self._check_res_access(resource_id)
-        self._setup_template_variables(pkg_dict, res)
+        self._setup_template_variables(pkg_dict, res, language)
 
         return render('package/resource_translate.html')
 
-    def resource_datapreview(self, resource_id, id):
+    def resource_datapreview(self, resource_id, id, language):
         '''
         Embeded page for a resource data-preview.
 
@@ -40,6 +40,7 @@ class UserController(BaseController):
             c.resource = toolkit.get_action('resource_show')(context,
                                                      {'id': resource_id})
             c.package = toolkit.get_action('package_show')(context, {'id': id})
+            c.resource_language = language
 
             data_dict = {'resource': c.resource, 'package': c.package}
 
@@ -87,7 +88,7 @@ class UserController(BaseController):
         }
         return context
 
-    def _setup_template_variables(self, pkg_dict, resource):
+    def _setup_template_variables(self, pkg_dict, resource, language):
         #c.is_sysadmin = False # Fixme: why? normally should be computed
         #c.user_dict = user_dict
         #c.is_myself = user_dict['name'] == c.user
@@ -96,4 +97,5 @@ class UserController(BaseController):
         #c.pkg_dict = pkg_dict
         c.package = pkg_dict
         c.resource = resource
+        c.resource_language = language
 

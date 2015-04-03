@@ -30,6 +30,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     p.implements(p.IAuthFunctions)
     p.implements(p.IPackageController, inherit=True)
     p.implements(p.ITemplateHelpers)
+    p.implements(p.IResourceController)
 
     def update_config(self, config):
         ''' Set up the resource library, public directory and
@@ -42,7 +43,8 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def get_helpers(self):
         return {
                 #'resource_edit': resource_edit,
-                'get_translations': self.get_translations,
+                'get_resource_languages': self.get_resource_languages,
+                'get_orig_language': self.get_orig_language,
                 }
 
     def can_preview(self, data_dict):
@@ -58,12 +60,12 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def before_map(self, mapper):
         mapper.connect(
                 'resource_translate',
-                '/dataset/{id}/resource_translate/{resource_id}',
+                '/dataset/{id}/resource_translate/{resource_id}/{language}',
                 controller='ckanext.multilinguality.controllers.package:UserController',
                 action = 'resource_translate')
 
         mapper.connect(
-                '/dataset/{id}/resource_translate_inner/{resource_id}',
+                '/dataset/{id}/resource_translate_inner/{resource_id}/{language}',
                 controller='ckanext.multilinguality.controllers.package:UserController',
                 action = 'resource_datapreview')
 
@@ -73,36 +75,64 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
 
         return mapper
 
-    def before_view(self, data_dict):
-        print 'BEFORE VIEW'
-        #language = request.environ['CKAN_LANG']
-        #pprint.pprint(data_dict)
-        #resources = data_dict.get('resources')
-        #t = resources[0]
-        #resources[0] = resources[1]
-        #resources[1] = t
-        #data_dict.update({'resources':resources})
-        return data_dict
-
     def after_update(self, context, data_dict):
         print 'AFTERT UPDATE'
+        for k,v in data_dict.iteritems():
+            if k=='resources':
+                new_res = []
+                for res in v:
+                    print 'res='
+                    print res
+                    if not res.get('resource_language'):
+                        print 'NO RES LANG'
+                        #self.set_orig_language(res, data_dict)
+                        #res.update({'resource_language': 'en'})
+                        print res.get('resource_language')
+        #            if not (('translation_resource' in res) and res.get('translation_status')=='published'):
+        #                new_res.append(res)
+        #        data_dict.update({k:new_res})
+        print 'ALL RESOURCES'
+        pprint.pprint(data_dict['resources'])
         return data_dict
+
+    def before_show(self, resource_dict):
+        return resource_dict
+    #def after_update(self, context, data_dict):
+    #    print 'BEFORE UPDATE'
+    #    resources = data_dict.get('resources')
+    #    new_resources = copy.deepcopy(resources)
+    #    for res in resources:
+    #        translations = json.loads(res.get('has_translations', u'{}'))
+    #        for trans,id in translations.iteritems():
+    #            res = p.toolkit.get_action('resource_show')(context, {'id':id})
+    #            new_resources.append(res)
+    #    data_dict.update({'resources':new_resources, 'num_resources':len(new_resources)})
 
     def after_delete(self, context, data_dict):
         print 'AFTER DELETE'
-
     def after_show(self, context, data_dict):
-        # TODO: Need to cut extra translation resources here
-        # so they are not visible in UI/other API functions
-
+        pass
         #for k,v in data_dict.iteritems():
         #    if k=='resources':
         #        new_res = []
         #        for res in v:
-        #            if not 'translation_resource' in res:
+        #            if not (('translation_resource' in res) and res.get('translation_status')=='published'):
         #                new_res.append(res)
         #        data_dict.update({k:new_res})
         #data_dict.update({'num_resources':len(new_res)})
+
+    def before_view(self, data_dict):
+        # TODO: Need to cut extra translation resources here
+        # so they are not visible in UI/other API functions
+        for k,v in data_dict.iteritems():
+            if k=='resources':
+                new_res = []
+                for res in v:
+                    if not 'translation_resource' in res:
+                        new_res.append(res)
+                data_dict.update({k:new_res})
+        data_dict.update({'num_resources':len(new_res)})
+        
         #print 'NEW DICT'
         #pprint.pprint(data_dict.get('resources'))
         #language = request.environ['CKAN_LANG']
@@ -127,8 +157,16 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 'translate_resource_publish': action.translate_resource_publish,
                 }
 
-    def get_translations(self, res):
-        orig_lang = res.get('resource_language', None)
+    def _get_context(self):
+        return {
+                'model':model,
+                'session':model.Session,
+                'ignore_auth':True,
+                'api_version':3,
+                }
+
+    def get_resource_languages(self, res):
+        orig_lang = self.get_orig_language(res)
         print 'translation'
         print (orig_lang)
         if not orig_lang:
@@ -136,12 +174,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         #return 
         #json.loads(res.get('has_translations','u{'+orig_lang+'}'))
         translations = json.loads(res.get('has_translations', u'{}'))
-        context = {
-                'model':model,
-                'session':model.Session,
-                'ignore_auth':True,
-                'api_version':3,
-                }
+        context = self._get_context()
         published_langs = [orig_lang]
         for lang,id in translations.iteritems():
             trans_res = toolkit.get_action('resource_show')(context, {'id':id})
@@ -151,6 +184,20 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 published_langs.append(lang)
         return published_langs
 
+    def _decide_language(self, res, pkg):
+        return u'en'
+
+    def set_orig_language(self, res, pkg):
+        context = self._get_context()
+        #### Make decision
+        language = self._decide_language(res, pkg)
+        data = {'id':res.get('id'), 'resource_language':language, 'format':res.get('format') }
+        print 'DATA'
+        print data
+        return p.toolkit.get_action('resource_update')(context, data)
+
+    def get_orig_language(self, res):
+        return res.get('resource_language',u'en')
 
     def get_auth_functions(self):
         return {
