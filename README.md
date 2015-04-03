@@ -1,3 +1,3 @@
-# ckanext-recline
+# ckanext-multilinguality
 
-A CKAN preview extension to preview tabular data using recline.
+A CKAN extension that allows tabular resource translation using recline. 
