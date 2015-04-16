@@ -2,7 +2,6 @@ import json
 
 import ckan.plugins as p
 import ckan.lib.navl.dictization_functions as df
-import ckanext.multilinguality.logic.validators as validators
 
 get_validator = p.toolkit.get_validator
 
