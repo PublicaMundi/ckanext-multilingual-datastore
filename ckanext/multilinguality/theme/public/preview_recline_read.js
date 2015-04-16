@@ -95,7 +95,8 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         }
         var orig_lang = resourceData.resource_language || 'en';
         console.log('trasn');
-        console.log(trans_lang);
+        console.log(lang);
+        console.log(orig_lang);
         console.log(resourceData);
 
         //resourceData = translate.delete(function() {}, function() { });

@@ -70,8 +70,6 @@ def translate_resource_create_schema():
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
         'mode': [ignore_missing, unicode, OneOf(
             ['automatic', 'manual', 'transcription'])],
-        'status': [ignore_missing, unicode, OneOf(
-            ['draft', 'ready'])],
         'language': [not_missing, unicode, OneOf(
             ['en', 'el','es', 'de', 'fr'])],
         '__junk': [empty],
@@ -86,8 +84,6 @@ def translate_resource_update_schema():
         'force': [ignore_missing, boolean_validator],
         'mode': [not_missing, unicode, OneOf(
             ['automatic', 'manual', 'transcription', 'title'])],
-        'status': [ignore_missing, unicode, OneOf(
-            ['draft', 'ready'])],
         'translation': [ignore_missing, unicode],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]

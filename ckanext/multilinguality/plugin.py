@@ -9,6 +9,7 @@ import ckan.model as model
 import ckanext.multilinguality.logic.action as action
 import ckanext.multilinguality.logic.auth as auth
 import ckanext.multilinguality.controllers.package as package_controller
+import ckan.lib.i18n as i18n
 
 import pprint
 import json
@@ -45,6 +46,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 #'resource_edit': resource_edit,
                 'get_resource_languages': self.get_resource_languages,
                 'get_orig_language': self.get_orig_language,
+                'get_language_translation_status': self.get_language_translation_status
                 }
 
     def can_preview(self, data_dict):
@@ -76,6 +78,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         return mapper
 
     def after_update(self, context, data_dict):
+        return data_dict
         print 'AFTERT UPDATE'
         for k,v in data_dict.iteritems():
             if k=='resources':
@@ -111,6 +114,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def after_delete(self, context, data_dict):
         print 'AFTER DELETE'
     def after_show(self, context, data_dict):
+        return data_dict
         pass
         #for k,v in data_dict.iteritems():
         #    if k=='resources':
@@ -124,6 +128,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def before_view(self, data_dict):
         # TODO: Need to cut extra translation resources here
         # so they are not visible in UI/other API functions
+        #return data_dict
         for k,v in data_dict.iteritems():
             if k=='resources':
                 new_res = []
@@ -165,15 +170,24 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 'api_version':3,
                 }
 
+    def get_language_translation_status(self, res, lang):
+        orig_lang = self.get_orig_language(res)
+        translations = json.loads(res.get('has_translations', '{}'))
+        lang = unicode(lang)
+        if lang not in translations.keys():
+            return 'none'
+        context = self._get_context()
+        trans_id = translations[lang]
+        trans_res = toolkit.get_action('resource_show')(context, {'id':trans_id})
+        return trans_res.get('translation_status')
+
     def get_resource_languages(self, res):
         orig_lang = self.get_orig_language(res)
-        print 'translation'
-        print (orig_lang)
         if not orig_lang:
             return None
         #return 
         #json.loads(res.get('has_translations','u{'+orig_lang+'}'))
-        translations = json.loads(res.get('has_translations', u'{}'))
+        translations = json.loads(res.get('has_translations', '{}'))
         context = self._get_context()
         published_langs = [orig_lang]
         for lang,id in translations.iteritems():
@@ -184,20 +198,23 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 published_langs.append(lang)
         return published_langs
 
-    def _decide_language(self, res, pkg):
-        return u'en'
+    def _decide_language(self, res):
+        # Have to decide original resource language
+        return 'en'
 
-    def set_orig_language(self, res, pkg):
+    def set_orig_language(self, res):
         context = self._get_context()
         #### Make decision
         language = self._decide_language(res, pkg)
         data = {'id':res.get('id'), 'resource_language':language, 'format':res.get('format') }
-        print 'DATA'
-        print data
         return p.toolkit.get_action('resource_update')(context, data)
 
     def get_orig_language(self, res):
-        return res.get('resource_language',u'en')
+        available_locales = i18n.get_available_locales()
+        orig_lang = res.get('resource_language', self._decide_language(res))
+        for locale in available_locales:
+            if locale == orig_lang:
+                return locale
 
     def get_auth_functions(self):
         return {

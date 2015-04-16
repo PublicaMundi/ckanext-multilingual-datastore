@@ -84,11 +84,17 @@ if (isNodeModule) {
                 }
             });
         });
+        console.log( 'lang!!!');
+        console.log(queryObj.translation_language);
+          
         results.result.records.forEach(function(rc, idx){
             fields2.forEach(function(fld2, idx2) {
             var extra = fld2.id+'-'+queryObj.translation_language;
                     if (fld2['id'] !== '_id'){
+                        //console.log(fld2);
+                        //console.log(results2);
                         var val = results2.result.records[idx][fld2['id']];
+                        //console.log(val);
                         rc[extra] = val; 
                     }
                 });

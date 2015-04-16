@@ -7,25 +7,45 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
   return {
     options: {
       i18n: {
-        errorLoadingPreview: "Could not load preview",
-        errorDataProxy: "DataProxy returned an error",
-        errorDataStore: "DataStore returned an error",
-        previewNotAvailableForDataType: "Preview not available for data type: "
+        heading: _("Please Confirm Action"),
+        datastore_disabled: _("Datastore is disabled. Please enable datastore and try again in order to proceed with resourcer translationm"),
+        confirm_delete: _("Are you sure you want to delete column translation?"),
+        confirm_update: _("Are you sure you want to update existing column translation?"),
+        confirm_publish: _("Are you sure you want to publish resource translation?"),
+        same_as_original: _("Cannot translate in original language."),
+        errorLoadingPreview: _("Could not load preview"),
+        errorDataProxy: _("DataProxy returned an error"),
+        errorDataStore: _("DataStore returned an error"),
+        previewNotAvailableForDataType: _("Preview not available for data type: ")
       },
+    template: [
+        '<div class="modal">',
+        '<div class="modal-header">',
+        '<a href="#" class="close" data-dismiss="modal">&times;</a>',
+        '<h3>Tranlate Column Title</h3>',
+        '</div>',
+        '<div class="modal-body">',
+        '<div class="divDialogElements">',
+        '<label><h4>Column title:</h4></label>',
+        '<input class="medium" id="xlInput" name="xlInput" type="text" />',
+        '</div>',
+        '</div>',
+        '<div class="modal-footer">',
+        '<a href="#" class="btn btn-cancel" id="closeDialog">Cancel</a>',
+        '<a href="#" class="btn btn-primary" id="okClicked">OK</a>',
+        '</div>',
+        '</div>'
+      ].join('\n'),
+
       site_url: ""
     },
 
     initialize: function () {
-        console.log('HELLO');
-        console.log(jQuery("html")[0].getAttribute('lang'));
       jQuery.proxyAll(this, /_on/);
       // hack to make leaflet use a particular location to look for images
-      this.button = jQuery("#button");
-      var html = '<a href="#" class="btn" id="saveClicked">Save</a> <a href="#" class="btn btn-primary" id="publishClicked">Publish</a>';
+      //this.button = jQuery("#button");
+      //var html = '<a href="#" class="btn" id="saveClicked">Save</a> <a href="#" class="btn btn-primary" id="publishClicked">Publish</a>';
 
-      this.buttons = jQuery("#saveButtons").html(html);
-      //this.buttons.hide();
-      this.buttons.show();
       this.save_btn = jQuery("#saveClicked");
       this.publish_btn = jQuery("#publishClicked");
       this.el.ready(this._onReady);
@@ -56,9 +76,9 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
       // 2 situations
       // a) something was posted to the datastore - need to check for this
       // b) csv or xls (but not datastore)
-      resourceData.formatNormalized = this.normalizeFormat(resourceData.format);
+      resourceData.formatNormalized = this._normalizeFormat(resourceData.format);
 
-      resourceData.url  = this.normalizeUrl(resourceData.url);
+      resourceData.url  = this._normalizeUrl(resourceData.url);
       if (resourceData.formatNormalized === '') {
         var tmp = resourceData.url.split('/');
         tmp = tmp[tmp.length - 1];
@@ -72,7 +92,9 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
       var dataset; 
       //, errorMsg;
       //var lang = jQuery("html")[0].getAttribute('lang');
-      var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
+      //var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
+      console.log(this.options);
+      var lang = this.options.translation_language;
       console.log('LANG!!!!!!');
       console.log(lang);
           //getAttribute('lang');
@@ -86,7 +108,8 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         }
         // Set endpoint of the resource to the datastore api (so it can locate
         // CKAN DataStore)
-        resourceData.endpoint = jQuery('body').data('site-root') + 'api';
+        //resourceData.endpoint = jQuery('body').data('site-root') + 'api';
+        resourceData.endpoint = this.options.site_url + 'api';
          
         resourceData.translation_language = lang;
          
@@ -95,56 +118,38 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         errorMsg = this.options.i18n.errorLoadingPreview + ': ' + this.options.i18n.errorDataStore;
         
         translate = new TranslateHelper(resourceData, lang); 
-        var trans_lang; 
+        var res_trans_id; 
         try{
-            trans_lang = JSON.parse(resourceData.has_translations)[lang];
+            res_trans_id = JSON.parse(resourceData.has_translations)[lang];
+            this.options.res_trans_id = res_trans_id;
         }
         catch(err) {
             
         }
+
         var orig_lang = resourceData.resource_language || 'en';
-        console.log('trasn');
-        console.log(trans_lang);
-        console.log(resourceData);
-        //resourceData = translate.delete(function() {}, function() { });
+
         if (orig_lang == lang){
-            alert('Cannot translate in origin language');
+          alert(self.i18n('same_as_original'));
+            // TODO: DOesnt work
+          self.sandbox.notify(self.i18n('same_as_original'), 'error');
         }
-        else if (trans_lang === undefined  && !("translation_resource" in resourceData)){
+        else if (res_trans_id === undefined  && !("translation_resource" in resourceData)){
             //translate.create(self.onLoad, self.onComplete);   
             // perform this in a function that starts with _on in order to reproxy
             resourceData = translate.create(function() {}, function() { 
-                //window.location.reload() 
-                self._onCreateNew(dataset, resourceData)
+                self._onCreateNew(dataset, resourceData);
+                //window.location.reload() ;
             });
         }
         else{
-
-        var translationResource = null;
-        this.initializeDataset(dataset, resourceData);
+            var translationResource = null;
+            this.initializeDataset(dataset, resourceData);
         }
-      } 
-      // CSV/XLS
-      else if (resourceData.formatNormalized in {'csv': '', 'xls': ''}) {
-        resourceData.format = resourceData.formatNormalized;
-        resourceData.backend = 'dataproxy';
-        dataset = new recline.Model.Dataset(resourceData);
-        //console.log(dataset);
-        errorMsg = this.options.i18n.errorLoadingPreview + ': ' +this.options.i18n.errorDataProxy;
-        dataset.fetch()
-          .done(function(dataset){
-            dataset.bind('query:fail', function (error) {
-              console.log('error');
-              console.log(error);
-              jQuery('.data-view-container', self.el).hide();
-              jQuery('.header', self.el).hide();
-            });
-            self.initializeDataExplorer(dataset);
-          })
-          .fail(function(error){
-            if (error.message) errorMsg += ' (' + error.message + ')';
-            showError(errorMsg);
-          });
+      }
+      else{
+          //TODO: doesnt work for some reason
+          self.sandbox.notify(self.i18n('datastore_disabled'), 'error');
       }
     },
     _onCreateNew: function(dataset, resourceData) {
@@ -153,91 +158,45 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         console.log('create new');
         console.log(resourceData);
     },
-    initializeDataset: function(dataset, resourceData) {
-        var self = this;
-        repaint = function(columns){
-                var header = jQuery(".data-view-container .slick-header .slick-column-name");
-                for (var key in columns){
-                    var mode = columns[key];
-                //    console.log(col);
-                //}
-                header.each(function(idx){
-                    var col = jQuery(this);
-                    console.log(col.text());
-                    col.parent().css("background-image", "none"); 
-                    col.parent().css("background-color","red");
-                    /*if (col.text() == key){
-                        console.log('FOUND');
-                        console.log(col.parent());
-                        if (mode === 'no-translate'){
-                            col.parent().css("background-color","red");
-                        }
-                        else if (mode === 'manual'){
-                            col.parent().css("background-color","green");
-                        }
-                        else if (mode === 'automatic'){
-                            col.parent().css("background-color","yellow");
-                        }
-                        else if (mode === 'transcription'){
-                            col.parent().css("background-color","green");
-                        }
-                        else{
-                            col.parent().css("background-color","black");
-                        }
-
-                    }
-                    */
-                });
-            }
-            };
-
-        onComplete = function(){
+    _onComplete: function(){
             
-        //dataExplorer.clearNotifications();
-        //var selfi = this;
-        var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
+        var lang = this.options.translation_language;
+        var self = this;
         dataExplorer.model.fetch().done(function(dataset){
-            console.log('data');
-            console.log(dataset);
-            var has_translations = dataset.attributes.has_translations;
-            var res_id;
-            console.log('hastransl');
-            console.log(has_translations);
-            console.log(lang);
-            try{
-                console.log('trying');
-                res_id = JSON.parse(has_translations)[lang];
-            }
-            catch(err) {
-                
-            }
-                console.log(res_id);
-                console.log(dataset.attributes.endpoint);
-                var res =translate.show_resource({endpoint:dataset.attributes.endpoint, id:res_id}).done(function(result){
-                    console.log('res');
-                    var result = result.result;
-                    console.log(result);
-                    var columns = {};
+            //var columns = dataset.fields.models;
+            var res = {id: self.options.res_trans_id, endpoint: self.options.site_url + 'api'};
+            console.log('asda');
+            console.log(res);
+            translate.show_resource(res, function(response){ 
+                if (response){
+                    var columns= {};
                     try{
-                        console.log('trying2');
-                        columns = JSON.parse(result.translation_columns);
-                    }
-                    catch(err2){
-                        
-                    }
+                        console.log(response.responseJSON.result);
+                        columns = JSON.parse(response.responseJSON.result.translation_columns_status);
+                        self.options.columns = columns;
                         console.log(columns);
-                        console.log('sef');
-                        console.log(self);
-                        //jQuery(columns).each(function(col, idx){
-                });
+                        //self._onRepaint(columns);
+                    }
+                    catch(err) {
+                        alert('oops');
+                    }
+                }
+                else{
+                    alert('resource fetch failed');
+                }
+
+            });
         });
-        //repaint(columns);
-    };
-    onLoad = function(){
+    },
+    _onLoad: function(){
         dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: true});
         //setTimeout(function(){ dataExplorer.model.fetch()}, 3000);
-    };
+    },
 
+    initializeDataset: function(dataset, resourceData) {
+        var self = this;
+        
+        
      console.log('!!!! 4');
      function showError(msg){
         msg = msg || _('error loading preview');
@@ -249,79 +208,63 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
                 var fields1 = dataset1.fields.models;
                 var records1 = dataset1.records.models;
                 
-                //dataset1['translation_language'] =  LANGUAGE;
-                //dataset1['translation_resource'] = JSON.parse(resourceData.has_translations)[LANGUAGE];
                 self.initializeDataExplorer(dataset1);
                 
-                if (("has_translations" in resourceData)){
-                        self.buttons.show();
-                        dataset.bind('translate-no', function(col){
-                            translate.delete(col.name, onLoad, onComplete);
+                dataset.bind('translate-no', function(col){
+                    var options = {column:col.name};
+                    self.deleteWithConfirmation(dataset1, options); 
 
-                        });
+                });
 
-                        var html = '<div class="modal-header"><a href="#" class="close" data-dismiss="modal">&times;</a> <h3>Tranlate Column Title</h3></div> <div class="modal-body"> <div class="divDialogElements"><label><h4>Column title:</h4></label><input class="medium" id="xlInput" name="xlInput" type="text" /> </div></div></div> <div class="modal-footer"><a href="#" class="btn" id="closeDialog">Cancel</a> <a href="#" class="btn btn-primary" id="okClicked">OK</a> </div>';
-                        jQuery("#windowTitleDialog").html(html);
-                        
-                        jQuery("#closeDialog").on('click',function(){
-                                jQuery("#windowTitleDialog").modal('hide');
-                            });
-
-                        dataset.bind('title', function(col){
-
-                            jQuery("#windowTitleDialog").modal('show');
-                            jQuery("#okClicked").on('click',function(){
-                                jQuery("#windowTitleDialog").modal('hide');
-                                //var col_translation = jQuery("#xlInput")[0].value;
-                                console.log('title???');
-                                var col_translation = '';
-                                translate.update(col.name, 'title', onLoad, onComplete, col_translation);
-
-                            });
                             
-                        });
-                        dataset.bind('translate-manual', function(col){
-                            jQuery("#windowTitleDialog").modal('show');
-                            jQuery("#okClicked").on('click',function(){
-                                jQuery("#windowTitleDialog").modal('hide');
-                                var col_translation = jQuery("#xlInput")[0].value;
-                                translate.update(col.name, 'manual', onLoad, onComplete, col_translation);
+                dataset.bind('title', function(col){
+                        var col_translation = '';
+                        //translate.update({column:col.name, mode:'title', title:col_translation}, self._onLoad, self._onComplete);
+                        self.confirm(self.i18n('confirm_update'));
+                    
+                });
+                
+                dataset.bind('translate-manual', function(col){
+                    var options = {column:col.name, mode:'manual'};
+                    self.updateWithConfirmation(dataset1, options); 
+                });
 
-                            });
+                dataset.bind('transcript', function(col){
+                    var options = {column:col.name, mode:'transcription'};
+                    self.updateWithConfirmation(dataset1, options); 
+                });
 
+                dataset.bind('translate-auto', function(col){
+                    //TODO
+                    var options = {column:col.name, mode:'automatic'};
+                    self.updateWithConfirmation(dataset1, options); 
+                });
+    
+                dataset1.queryState.bind('save', function(){
+                    //console.log('dataset being saved...');
+                    self.sandbox.notify('hello', 'success');
+                    //self.sandbox.client.favoriteDataset(this.button.val()).done(self._onSuccess);
+                    
+                    dataset1.save();
+                    //.done(function(){
+                        //self._onRepaint(self.options.columns);
+                    //});
+                });
 
-                        });
-                        dataset.bind('transcript', function(col){
-                            jQuery("#windowTitleDialog").modal('show');
-                            jQuery("#okClicked").on('click',function(){
-                                jQuery("#windowTitleDialog").modal('hide');
-                                var col_translation = jQuery("#xlInput")[0].value;
-                                translate.update(col.name, 'transcription', onLoad, onComplete, col_translation);
+                self.save_btn.click(function() {
+                    //console.log('dataset being saved...');
+                    dataset1.save();
+                    //self.sandbox.notify('hello', 'success');
+                });
 
-                            });
+                self.publish_btn.click(function() {
+                    //TODO: Save before publishing - something doesnt work
+                    //dataset.save().done(function(dataset){
+                    //translate.publish(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))})
+                    self.publishWithConfirmation(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))}); 
+                    //});
 
-                        });
-                        dataset.bind('translate-auto', function(col){
-                            //TODO
-                            //translate.update(resourceData, col.name, 'automatic');
-                        });
-            
-                        dataset1.queryState.bind('save', function(){
-                            console.log('dataset being saved...');
-                            dataset1.save();
-                        });
-
-                        self.save_btn.click(function() {
-                            console.log('dataset being saved...');
-                            dataset1.save();
-                        });
-
-                        self.publish_btn.click(function() {
-                            console.log('resource being published...');
-                            translate.publish(onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))});
-                        });
-
-                }
+                })
         
           })
           .fail(function(error){
@@ -329,12 +272,20 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
             showError(errorMsg);
           });
     },
-    
-    getEditor: function(column) {
+    _onSuccess: function(e) {
+        console.log('ae');
+        console.log(e);
+        console.log(this);
+    },
+    getTransSuffix: function(lang){
+        return '-' + lang;
+    },
+    _onEditor: function(column) {
 
         //var lang = jQuery("html")[0].getAttribute('lang');
-        var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
-        var extra = '-' + lang;
+        //var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
+        var lang = this.options.translation_language;
+        var extra = this.getTransSuffix(lang);
         var pos = column.name.indexOf(extra);
         if (pos > -1){
             return  Slick.Editors.Text
@@ -352,7 +303,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
           view: new recline.View.SlickGrid({
             model: dataset,
             //model2: dataset2,
-            state: { gridOptions: {editable:true, editorFactory: {getEditor:this.getEditor} } }
+            state: { gridOptions: {editable:true, editorFactory: {getEditor:this._onEditor} } }
           })
         },
         
@@ -380,20 +331,168 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
     
       
     },
-    normalizeFormat: function (format) {
+    _normalizeFormat: function (format) {
       var out = format.toLowerCase();
       out = out.split('/');
       out = out[out.length-1];
       return out;
     },
-    normalizeUrl: function (url) {
+    _normalizeUrl: function (url) {
       if (url.indexOf('https') === 0) {
         return 'http' + url.slice(5);
       } else {
         return url;
       }
     },
-      };
+    deleteWithConfirmation: function(dataset, options, ld, cb) {
+        //var res = {id:this.options.res_trans_id, endpoint:this.options.resourceData.endpoint};
+            var ld = ld || this._onLoad;
+            var cb = cb || this._onComplete;
+            var field_exists = this.checkFieldExists(dataset, options);
+
+            if (field_exists){
+                var col_translation = '';
+                this.options.helper = translate;
+                this.options.action = 'delete';
+                this.options.options = options;
+                this.options.cb = cb;
+                this.options.ld = ld;
+                
+                this.confirm(this.i18n('confirm_delete'));
+
+            }
+            else{
+
+            }        
+    },
+    publishWithConfirmation: function(ld, cb) {
+        var ld = ld || this._onLoad;
+        var cb = cb || this._onComplete;
+        this.options.helper = translate;
+        this.options.action = 'publish';
+        this.options.options = {};
+        this.options.cb = cb;
+        this.options.ld = ld;
+        this.confirm(this.i18n('confirm_publish'));
+    },
+    updateWithConfirmation: function(dataset, options, ld, cb) {
+        //var res = {id:this.options.res_trans_id, endpoint:this.options.resourceData.endpoint};
+            var ld = ld || this._onLoad;
+            var cb = cb || this._onComplete;
+            var field_exists = this.checkFieldExists(dataset, options);
+
+            if (field_exists){
+                var col_translation = '';
+                this.options.helper = translate;
+                this.options.action = 'update';
+                this.options.options = options;
+                this.options.ld = ld;
+                this.options.cb = cb;
+
+                this.confirm(this.i18n('confirm_update'));
+
+            }
+            else{
+                translate.update(options, this._onLoad, this._onComplete);
+            }        
+    },
+    checkFieldExists: function(dataset, options){
+        var lang = this.options.translation_language;
+        var col = options.column+this.getTransSuffix(lang);
+        var fields = dataset.fields.models;
+        var field_exists = false; 
+        fields.forEach(function(fld, idx){
+            if (fld.id == col){
+                field_exists = true;
+                return;
+            }
+        });
+        return field_exists;
+    },
+    confirm: function (text) {
+      this.sandbox.body.append(this.createModal(text));
+      this.modal.modal('show');
+      
+       // Center the modal in the middle of the screen.
+      this.modal.css({
+        'margin-top': this.modal.height() * -0.5,
+        'top': '50%'
+      });
+    },
+
+     createModal: function (text) {
+      //if (!this.modal) {
+      // re-create modal everytime it is called
+        var element = this.modal = jQuery(this.options.template);
+        element.on('click', '.btn-primary', this._onConfirmSuccess);
+        element.on('click', '.btn-cancel', this._onConfirmCancel);
+        element.modal({show: false});
+        element.find('h3').text(this.i18n('heading'));
+        element.find('.modal-body').text(text);
+        
+        element.find('.btn-primary').text(this.i18n('confirm'));
+        element.find('.btn-cancel').text(this.i18n('cancel'));
+      //}
+      return this.modal;
+    },
+
+    /* Event handler for the success event */
+    _onConfirmSuccess: function (e) {
+        var h = this.options.helper;
+        var action = this.options.action;
+        var options = this.options.options;
+        var ld = this.options.ld;
+        var cb = this.options.cb;
+        console.log('callback');
+        console.log(cb);   
+        this.sandbox.body.append(h[action](options, ld, cb));
+      this.modal.modal('hide');
+    },
+
+    /* Event handler for the cancel event */
+    _onConfirmCancel: function (event) {
+      this.modal.modal('hide');
+    },
+    _onRepaint: function(columns){
+        var header = jQuery(".data-view-container .slick-header .slick-column-name");
+        var self = this;
+        for (var key in columns){
+            var mode = columns[key];
+            //console.log('key');
+            //console.log(key);
+        //    console.log(col);
+        //}
+        
+        var lang = self.options.translation_language;
+        var extra = self.getTransSuffix(lang);
+        header.each(function(idx){
+            var col = jQuery(this);
+            //console.log(col.text());
+            col.parent().css("background-image", "none"); 
+            //col.parent().css("background-color","red");
+            if (col.text().startsWith(key)){
+                if (mode === 'no-translate'){
+                    col.parent().css("background-color","red");
+                }
+                else if (mode === 'manual'){
+                    col.parent().css("background-color","blue");
+                }
+                else if (mode === 'automatic'){
+                    col.parent().css("background-color","yellow");
+                }
+                else if (mode === 'transcription'){
+                    col.parent().css("background-color","green");
+                }
+                else{
+                    col.parent().css("background-color","grey");
+                }
+            }
+        
+            });
+            }
+        }
+
+  };
 });
 
 

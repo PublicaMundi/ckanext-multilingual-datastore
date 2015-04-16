@@ -5,21 +5,26 @@
 {{ super() }}
 {# {% link_for  _('Translate'), controller='ckanext.multilinguality.controllers.package:UserController', action='resource_translate', resource_id=res.id, id=pkg.name, class_='btn', icon='flag' %} #}
 {% block translate_item_explore %}
+
+{% block translation_status_modal %}
+
+{% resource 'ckanext-multilinguality/check_status.js' %}
+{% endblock %}
   {% if h.check_access('package_update', {'id':pkg.id }) and not translation_resource %}
   <div class="dropdown btn-group">
-    <a href="#" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+    <a href="#" class="btn btn-primary dropdown-toggle"  data-toggle="dropdown">
       <i class="icon-flag"></i>
       {{ _('Translate') }}
       <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
-      {% block translate_item_explore_links %}
-      {% for locale in h.get_available_locales() %}
-      {% if not locale == h.get_orig_language(res) %}
-      <li>
-       <a href="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_translate', resource_id=res.id, id=pkg.name, language=locale) }}">{{ locale.display_name }}</a>
-       </li>
-       {% endif %}
+    {% block translate_item_explore_links %}
+    {% for locale in h.get_available_locales() %}
+        {% if not locale == h.get_orig_language(res) %}
+        <li>
+        <a data-module="check_status" data-module-language="{{ locale.english_name}}" data-module-status="{{ h.get_language_translation_status(res, locale)}}" href="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_translate', resource_id=res.id, id=pkg.name, language=locale) }}">{{ h.get_orig_language(res).display_name }} -> {{ locale.display_name }}</a>
+        </li>
+        {% endif %}
       {% endfor %}
       {% endblock %}
     </ul>
@@ -27,4 +32,6 @@
   {% endif %}
   {% endblock %}
 
-{% endblock %}
+  {% endblock %}
+
+  
