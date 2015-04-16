@@ -138,7 +138,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
             //translate.create(self.onLoad, self.onComplete);   
             // perform this in a function that starts with _on in order to reproxy
             resourceData = translate.create(function() {}, function() { 
-                self._onCreateNew(dataset, resourceData);
+            self.initializeDataset(dataset, resourceData);
                 //window.location.reload() ;
             });
         }
@@ -151,12 +151,6 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
           //TODO: doesnt work for some reason
           self.sandbox.notify(self.i18n('datastore_disabled'), 'error');
       }
-    },
-    _onCreateNew: function(dataset, resourceData) {
-        var translationResource = null;
-        this.initializeDataset(dataset, resourceData);
-        console.log('create new');
-        console.log(resourceData);
     },
     _onComplete: function(){
             
