@@ -19,10 +19,13 @@ log = getLogger(__name__)
 class ReclinePreviewMultilinguality(p.SingletonPlugin):
     """This extension previews resources using recline
 
-    This extension implements two interfaces
+        This extension implements two interfaces
 
       - ``IConfigurer`` allows to modify the configuration
       - ``IResourcePreview`` allows to add previews
+
+        Important note: For the moment since there is not way to select better preview, if recline preview is enabled recline-multilingual plugin
+                        must be loaded with higher priority in development.ini
     """
     p.implements(p.IConfigurer, inherit=True)
     p.implements(p.IResourcePreview, inherit=True)
@@ -54,7 +57,11 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         if data_dict['resource'].get('datastore_active'):
             return True
         format_lower = data_dict['resource']['format'].lower()
-        return format_lower in ['csv', 'xls', 'tsv']
+        previewable = format_lower in ['csv', 'xls', 'tsv']
+        return {
+                'can_preview': previewable,
+                'quality': 3
+                }
 
     def preview_template(self, context, data_dict):
         return 'recline_read.html'
