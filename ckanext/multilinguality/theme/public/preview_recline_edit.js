@@ -2,8 +2,9 @@
 var dataExplorer;
 //var LANGUAGE =  'fr';
 var errorMsg;
-
-this.ckan.module('reclinepreview', function (jQuery, _) {  
+var views;
+var grid;
+this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {  
   return {
     options: {
       i18n: {
@@ -26,8 +27,11 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         '</div>',
         '<div class="modal-body">',
         '<div class="divDialogElements">',
-        '<label><h4>Column title:</h4></label>',
-        '<input class="medium" id="xlInput" name="xlInput" type="text" />',
+        '<label style="display:inline-block"><h4>Title:</h4></label>',
+        '<label style="display:inline-block" id="labelTitleOriginal"><h4></h4></label>',
+        '<br>',
+        '<label for="inputTitleTrans"><h4>Translation:</h4></label>',
+        '<input class="medium inputTitleTrans" id="inputTitleTrans" name="xlInput" type="text" />',
         '</div>',
         '</div>',
         '<div class="modal-footer">',
@@ -89,19 +93,12 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
           resourceData.formatNormalized = ext[ext.length-1];
         }
       }
-      var dataset; 
-      //, errorMsg;
-      //var lang = jQuery("html")[0].getAttribute('lang');
-      //var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
-      console.log(this.options);
       var lang = this.options.translation_language;
-      console.log('LANG!!!!!!');
-      console.log(lang);
-          //getAttribute('lang');
+      
       // Datastore
       if (resourceData.datastore_active) {
         if (!("translation_resource" in resourceData)){
-            resourceData.backend =  'ckanedit';
+            resourceData.backend =  'ckanTranslateEdit';
         }
         else{
             resourceData.backend =  'ckan';
@@ -113,7 +110,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
          
         resourceData.translation_language = lang;
          
-        dataset = new recline.Model.Dataset(resourceData);
+        var dataset = new recline.Model.Dataset(resourceData);
          
         errorMsg = this.options.i18n.errorLoadingPreview + ': ' + this.options.i18n.errorDataStore;
         
@@ -135,14 +132,26 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
           self.sandbox.notify(self.i18n('same_as_original'), 'error');
         }
         else if (res_trans_id === undefined  && !("translation_resource" in resourceData)){
-            //translate.create(self.onLoad, self.onComplete);   
-            // perform this in a function that starts with _on in order to reproxy
-            resourceData = translate.create(function() {}, function() { 
+            
+            console.log("NEW TRANSLATION");
+            var transResource = translate.create(function() {}, function() { 
+            var translations = {};
+                try{
+                     translations = JSON.parse(resourceData.has_translations)
+                }
+                catch(err){
+            
+                }
+            translations[lang] = transResource.responseJSON.result.id;
+            resourceData.has_translations = JSON.stringify(translations);
+            
+            dataset = new recline.Model.Dataset(resourceData);
+                    
             self.initializeDataset(dataset, resourceData);
-                //window.location.reload() ;
             });
         }
         else{
+            console.log("PREVIOUS TRANSLATION");
             var translationResource = null;
             this.initializeDataset(dataset, resourceData);
         }
@@ -156,30 +165,13 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
             
         var lang = this.options.translation_language;
         var self = this;
-        dataExplorer.model.fetch().done(function(dataset){
             //var columns = dataset.fields.models;
-            var res = {id: self.options.res_trans_id, endpoint: self.options.site_url + 'api'};
-            console.log('asda');
-            console.log(res);
-            translate.show_resource(res, function(response){ 
-                if (response){
-                    var columns= {};
-                    try{
-                        console.log(response.responseJSON.result);
-                        columns = JSON.parse(response.responseJSON.result.translation_columns_status);
-                        self.options.columns = columns;
-                        console.log(columns);
-                        //self._onRepaint(columns);
-                    }
-                    catch(err) {
-                        alert('oops');
-                    }
-                }
-                else{
-                    alert('resource fetch failed');
-                }
-
-            });
+            //var res = {id: self.options.res_trans_id, endpoint: self.options.site_url + 'api'};
+           
+            // refetch model on complete to update changes            
+            dataExplorer.model.fetch().done(function(dataset){
+                self._onRepaint(dataset.fields.models);
+            
         });
     },
     _onLoad: function(){
@@ -191,55 +183,50 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         var self = this;
         
         
-     console.log('!!!! 4');
      function showError(msg){
         msg = msg || _('error loading preview');
         window.parent.ckan.pubsub.publish('data-viewer-error', msg);
       }
-        dataset.fetch()
-              .done(function(dataset1){
+
+                self._onInitializeDataExplorer(dataset);
                 
-                var fields1 = dataset1.fields.models;
-                var records1 = dataset1.records.models;
-                
-                self.initializeDataExplorer(dataset1);
-                
+
+                self._onComplete();   
+
                 dataset.bind('translate-no', function(col){
-                    var options = {column:col.name};
-                    self.deleteWithConfirmation(dataset1, options); 
-
+                    var options = {column:col.id};
+                    self.deleteWithConfirmation(dataset, options); 
                 });
-
                             
-                dataset.bind('title', function(col){
-                        var col_translation = '';
-                        //translate.update({column:col.name, mode:'title', title:col_translation}, self._onLoad, self._onComplete);
-                        self.confirm(self.i18n('confirm_update'));
-                    
-                });
-                
                 dataset.bind('translate-manual', function(col){
-                    var options = {column:col.name, mode:'manual'};
-                    self.updateWithConfirmation(dataset1, options); 
+                    var options = {column:col.id, mode:'manual'};
+                    self.updateWithConfirmation(dataset, options); 
                 });
 
                 dataset.bind('transcript', function(col){
-                    var options = {column:col.name, mode:'transcription'};
-                    self.updateWithConfirmation(dataset1, options); 
+                    var options = {column:col.id, mode:'transcription'};
+                    self.updateWithConfirmation(dataset, options); 
                 });
 
                 dataset.bind('translate-auto', function(col){
                     //TODO
-                    var options = {column:col.name, mode:'automatic'};
-                    self.updateWithConfirmation(dataset1, options); 
+                    var options = {column:col.id, mode:'automatic'};
+                    self.updateWithConfirmation(dataset, options); 
                 });
     
-                dataset1.queryState.bind('save', function(){
+                dataset.bind('translate-title', function(col){
+                    var options = {column:col.id, mode:'title'};
+                    console.log('before update w conf');
+                    self.updateWithConfirmation(dataset, options); 
+                });
+
+                dataset.queryState.bind('save', function(){
                     //console.log('dataset being saved...');
                     self.sandbox.notify('hello', 'success');
                     //self.sandbox.client.favoriteDataset(this.button.val()).done(self._onSuccess);
+                    self._onComplete();
                     
-                    dataset1.save();
+                    dataset.save();
                     //.done(function(){
                         //self._onRepaint(self.options.columns);
                     //});
@@ -247,24 +234,29 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
 
                 self.save_btn.click(function() {
                     //console.log('dataset being saved...');
-                    dataset1.save();
+                    dataset.save();
                     //self.sandbox.notify('hello', 'success');
                 });
 
                 self.publish_btn.click(function() {
                     //TODO: Save before publishing - something doesnt work
-                    //dataset.save().done(function(dataset){
+                    dataset.save();
+                        //function(dataset){
+                     //   alert('done saving');
                     //translate.publish(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))})
-                    self.publishWithConfirmation(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))}); 
+                        self.publishWithConfirmation(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))}); 
+                    //})
                     //});
 
                 })
-        
-          })
-          .fail(function(error){
-            if (error.message) errorMsg += ' (' + error.message + ')';
-            showError(errorMsg);
-          });
+                
+          //      });
+        //
+        //  })
+        //  .fail(function(error){
+        //    if (error.message) errorMsg += ' (' + error.message + ')';
+        //    showError(errorMsg);
+        //  });
     },
     _onSuccess: function(e) {
         console.log('ae');
@@ -274,13 +266,16 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
     getTransSuffix: function(lang){
         return '-' + lang;
     },
+    removeTransSuffix: function(title, lang){
+        return title.substring(0, title.indexOf("-"+lang));
+    },
     _onEditor: function(column) {
 
         //var lang = jQuery("html")[0].getAttribute('lang');
         //var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
         var lang = this.options.translation_language;
         var extra = this.getTransSuffix(lang);
-        var pos = column.name.indexOf(extra);
+        var pos = column.id.indexOf(extra);
         if (pos > -1){
             return  Slick.Editors.Text
         }
@@ -289,14 +284,13 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         }
     },
     
-    initializeDataExplorer: function (dataset) {
-      var views = [
+    _onInitializeDataExplorer: function (dataset) {
+      views = [
         {
           id: 'grid',
           label: 'Grid',
           view: new recline.View.SlickGrid({
             model: dataset,
-            //model2: dataset2,
             state: { gridOptions: {editable:true, editorFactory: {getEditor:this._onEditor} } }
           })
         },
@@ -322,9 +316,9 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
           readOnly: true,
         }
       });
-    
-      
+  
     },
+
     _normalizeFormat: function (format) {
       var out = format.toLowerCase();
       out = out.split('/');
@@ -370,25 +364,41 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         this.confirm(this.i18n('confirm_publish'));
     },
     updateWithConfirmation: function(dataset, options, ld, cb) {
-        //var res = {id:this.options.res_trans_id, endpoint:this.options.resourceData.endpoint};
+            
             var ld = ld || this._onLoad;
             var cb = cb || this._onComplete;
             var field_exists = this.checkFieldExists(dataset, options);
+            options.selectable = false;
+            
+            if (options.mode == 'title'){
+                    this.options.helper = translate;
+                    this.options.action = 'update';
+                    this.options.options = options;
+                    this.options.ld = ld;
+                    this.options.cb = cb;
 
-            if (field_exists){
-                var col_translation = '';
-                this.options.helper = translate;
-                this.options.action = 'update';
-                this.options.options = options;
-                this.options.ld = ld;
-                this.options.cb = cb;
+                    this.confirmTitle(options.column);
+                 
+                    $('.inputTitleTrans').on('input', function(e){
+                        options.title_trans = e.target.value;
+                    });
 
-                this.confirm(this.i18n('confirm_update'));
-
-            }
-            else{
-                translate.update(options, this._onLoad, this._onComplete);
-            }        
+            } 
+            else{ 
+                if (field_exists){
+                    var col_translation = '';
+                    this.options.helper = translate;
+                    this.options.action = 'update';
+                    this.options.options = options;
+                    this.options.ld = ld;
+                    this.options.cb = cb;
+                
+                    this.confirm(this.i18n('confirm_update'));
+                }
+                else{
+                    translate.update(options, this._onLoad, this._onComplete);
+                } 
+            }       
     },
     checkFieldExists: function(dataset, options){
         var lang = this.options.translation_language;
@@ -403,6 +413,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         });
         return field_exists;
     },
+
     confirm: function (text) {
       this.sandbox.body.append(this.createModal(text));
       this.modal.modal('show');
@@ -413,7 +424,27 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         'top': '50%'
       });
     },
-
+    confirmTitle: function(text) {
+        console.log('confirm title');
+        console.log(this.modal);
+        this.sandbox.body.append(this.createModalFromTemplate(text));
+        this.modal.modal('show');
+       // Center the modal in the middle of the screen.
+      this.modal.css({
+        'margin-top': this.modal.height() * -0.5,
+        'top': '50%'
+      });
+    },
+     createModalFromTemplate: function(col_name) {
+        var element = this.modal = jQuery(this.options.template);
+        element.on('click', '.btn-primary', this._onConfirmSuccess);
+        element.on('click', '.btn-cancel', this._onConfirmCancel);
+        element.modal({show: false});
+        //element.find('h3').text(this.i18n('heading'));
+        element.find('#labelTitleOriginal h4').text(col_name);
+      
+      return this.modal;
+    },
      createModal: function (text) {
       //if (!this.modal) {
       // re-create modal everytime it is called
@@ -450,6 +481,41 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
     _onRepaint: function(columns){
         var header = jQuery(".data-view-container .slick-header .slick-column-name");
         var self = this;
+        
+        for (var key in columns){
+
+            var column = columns[key].attributes;
+            var label = column.label;
+            var mode = column.status;
+        
+            var lang = self.options.translation_language;
+            var extra = self.getTransSuffix(lang);
+            header.each(function(idx){
+                var col = jQuery(this);
+                if (col.text() === label){
+                    if (mode === 'no-translate'){
+                        col.parent().css("background-color","#d7314c");
+                    }
+                    else if (mode === 'manual'){
+                        col.parent().css("background-color","#67da5e");
+                    }
+                    else if (mode === 'automatic'){
+                        col.parent().css("background-color","#e9e580");
+                    }
+                    else if (mode === 'transcription'){
+                        col.parent().css("background-color","#6691d8");
+                    }
+                    else{
+                        //col.parent().css("background-color","#ccc");
+                    }
+                }
+            
+                });
+            }
+    },
+    _onRepaintOld: function(columns){
+        var header = jQuery(".data-view-container .slick-header .slick-column-name");
+        var self = this;
         for (var key in columns){
             var mode = columns[key];
             //console.log('key');
@@ -462,23 +528,23 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         header.each(function(idx){
             var col = jQuery(this);
             //console.log(col.text());
-            col.parent().css("background-image", "none"); 
+            //col.parent().css("background-image", "none"); 
             //col.parent().css("background-color","red");
             if (col.text().startsWith(key)){
                 if (mode === 'no-translate'){
-                    col.parent().css("background-color","red");
+                    col.parent().css("background-color","#d7314c");
                 }
                 else if (mode === 'manual'){
-                    col.parent().css("background-color","blue");
+                    col.parent().css("background-color","#67da5e");
                 }
                 else if (mode === 'automatic'){
-                    col.parent().css("background-color","yellow");
+                    col.parent().css("background-color","#e9e580");
                 }
                 else if (mode === 'transcription'){
-                    col.parent().css("background-color","green");
+                    col.parent().css("background-color","#6691d8");
                 }
                 else{
-                    col.parent().css("background-color","grey");
+                    col.parent().css("background-color","#666666");
                 }
             }
         

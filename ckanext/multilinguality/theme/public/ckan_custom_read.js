@@ -46,7 +46,7 @@ if (isNodeModule) {
         cb(err);
         return;
       }
-            
+        
        // map ckan types to our usual types ...
       var fields = _.map(results.result.fields, function(field) {
         field.type = field.type in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.type] : field.type;
@@ -54,12 +54,12 @@ if (isNodeModule) {
         return field;
       });
      
-        var out = {
+      var out = {
             total: results.result.total,
+            //fields: fields,
             fields: results.result.fields,
             hits: results.result.records,
             };
-        
 
       cb(null, out);
 
@@ -328,9 +328,9 @@ if (isNodeModule) {
 // Set the url attribute of the dataset to point to the Resource on the CKAN instance. The endpoint and id will then be automatically computed.
 var recline = recline || {};
 recline.Backend = recline.Backend || {};
-recline.Backend.CkanRead = recline.Backend.CkanRead || {};
+recline.Backend.CkanTranslateRead = recline.Backend.CkanTranslateRead || {};
 (function(my) {
-  my.__type__ = 'ckanread';
+  my.__type__ = 'ckanTranslateRead';
 
   // private - use either jQuery or Underscore Deferred depending on what is available
   var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
@@ -379,7 +379,16 @@ recline.Backend.CkanRead = recline.Backend.CkanRead || {};
     
     //queryObj.translation_column = dataset.translation_column;
     queryObj.translation_language = dataset.translation_language;
-    queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
+    try{
+            //queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
+            queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
+        }
+        catch(err) {
+            queryObj.translation_resource = {}
+            
+        }
+
+
     //wrapper.datastoreUpdate(queryObj,function(err, out){
     //});
     wrapper.datastoreQueryTrans(queryObj, function(err, out) {
@@ -438,5 +447,5 @@ recline.Backend.CkanRead = recline.Backend.CkanRead || {};
       return dfd.promise();
 
   };
-}(recline.Backend.CkanRead));
+}(recline.Backend.CkanTranslateRead));
 

@@ -4611,7 +4611,6 @@ my.SlickGrid = Backbone.View.extend({
         });
         self.state.set({columnsWidth:columnsWidth});
     });
-
     this.grid.onCellChange.subscribe(function (e, args) {
       // We need to change the model associated value
       //
@@ -4622,7 +4621,6 @@ my.SlickGrid = Backbone.View.extend({
       v[field] = args.item[field];
       model.set(v);
     });
-
     var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
                                                        _.extend(options,{state:this.state}));
 

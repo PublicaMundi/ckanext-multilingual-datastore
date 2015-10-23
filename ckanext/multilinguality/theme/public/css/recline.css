@@ -1,3 +1,6 @@
+html{
+    overflow-y: hidden;
+}
 body {
   background-color: #fff;
 }
@@ -25,7 +28,13 @@ body {
   width: 32px;
   height: 32px;
 }
-            
+.slick-contextmenu input{
+    margin: 2px 5px 0 5px;
+}
+.recline-slickgrid .slick-header-columns .slick-header-column{
+    background: '#666';
+    background-image: none;
+}
 .divDemoBody  {
     width: 60%;
     margin-left: auto;

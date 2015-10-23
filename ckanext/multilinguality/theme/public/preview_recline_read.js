@@ -3,7 +3,7 @@ var dataExplorer;
 //var LANGUAGE =  'fr';
 var errorMsg;
 
-this.ckan.module('reclinepreview', function (jQuery, _) {  
+this.ckan.module('recline_translate_read_preview', function (jQuery, _) {  
   return {
     options: {
       i18n: {
@@ -112,7 +112,7 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
         //}    alert('Cannot translate in origin language');
         }
         else{
-            resourceData.backend =  'ckanread';
+            resourceData.backend =  'ckanTranslateRead';
             dataset = new recline.Model.Dataset(resourceData);
             console.log('dataset');
             console.log(dataset);
@@ -237,7 +237,8 @@ this.ckan.module('reclinepreview', function (jQuery, _) {
           })
         }
       ];
-
+        console.log('dataset');
+        console.log(dataset);
       dataExplorer = new recline.View.MultiView({
         el: this.el,
         model: dataset,

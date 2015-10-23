@@ -33,31 +33,35 @@ function TranslateHelper (resource, lang){
         var title_trans = title_trans || null;
         var options = options || {};
         var col_name = options.column;
+        var new_col_name = null;
+
         var mode = options.mode; 
-        var title_trans = options.title;
+        var title_trans = options.title_trans;
         console.log('updating..');
+        console.log(title_trans);
         var self = this;
         var url = resource.endpoint + '/3/action/translate_resource_update';
         
-        var translations = {};
-        try{
-            translations = JSON.parse(resource.has_translations);
-        }
-        catch(err) {
-            alert(err);
-        }
+        //var translations = {};
+        //try{
+        //    translations = JSON.parse(resource.has_translations);
+        //}
+        //catch(err) {
+        //    alert(err);
+        //}
 
-        console.log(translations);
-        var new_res_id = translations[lang];
+        //console.log(translations);
+        //var new_res_id = translations[lang];
         
-        var res = {endpoint:resource.endpoint, id:new_res_id};
+        var res = {endpoint:resource.endpoint, id:resource.id};
         console.log('RESOURECE');
-        console.log(new_res_id); 
+        console.log(res); 
         var options = {
-                    resource_id: new_res_id,
+                    resource_id: resource.id,
+                    language: lang,
                     column_name: col_name,
                     mode: mode,
-                    translation: title_trans,
+                    title_translation: title_trans,
                 }
         return this.call_ajax(url, options, ld, cb);           
     }; 
@@ -73,7 +77,7 @@ function TranslateHelper (resource, lang){
 
         var url = resource.endpoint + '/3/action/translate_resource_delete';
         
-        var translations = {};
+        /*var translations = {};
         try{
             translations = JSON.parse(resource.has_translations);
         }
@@ -81,18 +85,20 @@ function TranslateHelper (resource, lang){
             alert(err);
         }
         var new_res_id = translations[lang];
-        
+        */
         if (col_name !== undefined){
         
         var options = {
-            resource_id: new_res_id,
+            resource_id: resource.id,
+            language: lang,
             column_name: col_name
         }
         
         }
         else{
             var options = {
-                resource_id: new_res_id
+                resource_id: resource.id,
+                language: lang
             }
         
         }
@@ -103,6 +109,7 @@ function TranslateHelper (resource, lang){
         console.log('publishing..');
         console.log(resource);
         var url = resource.endpoint + '/3/action/translate_resource_publish';
+        /*
         var translations = {};
         try{
             translations = JSON.parse(resource.has_translations);
@@ -112,9 +119,10 @@ function TranslateHelper (resource, lang){
         }
         
         var new_res_id = translations[lang];
-
+        */
         var options = {
-            resource_id:new_res_id,
+            resource_id:resource.id,
+            language: lang
         }
         console.log('before calling ajax');
         console.log(ld);
@@ -126,7 +134,7 @@ function TranslateHelper (resource, lang){
         console.log('unpublishing..');
         console.log(resource);
         var url = resource.endpoint + '/3/action/translate_resource_unpublish';
-        
+        /*
         var translations = {};
         try{
             translations = JSON.parse(resource.has_translations);
@@ -136,9 +144,10 @@ function TranslateHelper (resource, lang){
         }
         
         var new_res_id = translations[lang];
-
+        */
         var options = {
-            resource_id:new_res_id,
+            resource_id:resource.id,
+            language:lang
         }
         return this.call_ajax(url, options, ld, cb);    
     };

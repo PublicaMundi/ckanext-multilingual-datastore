@@ -6,21 +6,22 @@
 {% set languages = h.get_resource_languages(res) %}
 
 {% block resource_read_title %}
-{{ super() }}
-{% block resource_languages %}
-{{ _('Resource language:') }}
-<ul class="dataset-resources unstyled">
-    
+<h1 class="page-heading">{{ h.resource_display_name(res) | truncate(50) }}
+<ul class="dataset-resources unstyled" style="display:inline-block">
 {% if languages and h.lang() in languages %}
-<li><a class="label ">{{ h.lang()|upper }}</a></li>
+<li><a class="label" style="vertical-align: middle; margin:0">{{ h.lang()|upper }}</a></li>
 {% else %}
-<li><a class="label">{{ res.resource_language|upper }}</a></li>
+<li><a class="label" style="vertical-align: middle; margin:0">{{ res.resource_language|upper }}</a></li>
 {% endif %}
 </ul>
-{{ _('Available languages:') }}
-{% snippet 'package/snippets/resource_languages.html', pkg=pkg, res=res %}
+</h1>
 {% endblock %}
+{#
+{% block resource_languages %}
+<span>{{ _('Available languages:') }}</span>
+{% snippet 'package/snippets/resource_languages.html', res=res, pkg = pkg %}
 {% endblock %}
+#}
 {% block resource_actions_inner %}
 {{ super() }}
 {% endblock %}

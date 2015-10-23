@@ -4654,9 +4654,9 @@ my.SlickGrid = Backbone.View.extend({
       v[field] = args.item[field];
       model.set(v);
     });
-
-    var columnpicker = new Slick.Controls.TColumnPicker(this.model, columns, this.grid,
-                                                       _.extend(options,{state:this.state}));
+    var columnpicker = new Slick.Controls.TColumnPicker(this.model, columns, this.grid);
+                                                       
+            //_.extend(options,{state:this.state}));
             
     if (self.visible){
       self.grid.init();
@@ -4690,6 +4690,7 @@ my.SlickGrid = Backbone.View.extend({
 })(jQuery, recline.View);
 
 
+    /*
 (function ($) {
   function TranslateColumnPicker(model, columns, grid, options) {
     var $menu;
@@ -4703,9 +4704,7 @@ my.SlickGrid = Backbone.View.extend({
     function init() {
       grid.onHeaderContextMenu.subscribe(handleHeaderContextMenu);
       options = $.extend({}, defaults, options);
-
       $menu = $('<ul class="dropdown-menu slick-contextmenu" style="display:none;position:absolute;z-index:20;" />').appendTo(document.body);
-
       $menu.bind('mouseleave', function (e) {
         $(this).fadeOut(options.fadeSpeed);
       });
@@ -4715,10 +4714,18 @@ my.SlickGrid = Backbone.View.extend({
 
     function handleHeaderContextMenu(e, args) {
       e.preventDefault();
+      console.log("CLICKED");
+      console.log(e);
+      console.log(args);
+      console.log(model);
+      console.log(grid);
+      //if (args.column.name.indexOf('-fr')>0){
+      //  return;
+      //}
       $menu.empty();
       columnCheckboxes = [];
       //console.log(args);
-      var $li, $input;
+      var $li, $input, $label;
       /* for (var i = 0; i < columns.length; i++) {
         $li = $('<li />').appendTo($menu);
         $input = $('<input type="checkbox" />').data('column-id', columns[i].id).attr('id','slick-column-vis-'+columns[i].id);
@@ -4733,50 +4740,54 @@ my.SlickGrid = Backbone.View.extend({
             .attr('for','slick-column-vis-'+columns[i].id)
             .appendTo($li);
       }
-      $('<li/>').addClass('divider').appendTo($menu); */
+      $('<li/>').addClass('divider').appendTo($menu); 
    
-      /*$li = $('<li />').appendTo($menu);
+      //$li = $('<li />').appendTo($menu);
       $input = $('<input type="checkbox">').data('option', 'title').attr('id','title');
       $input.appendTo($li);
       columnCheckboxes.push($input);
       $('<label />')
           .text('Translate Title')
           .appendTo($li);
-      */
-      $li = $('<li />').appendTo($menu);
+      //
+          
+          $li = $('<li />').appendTo($menu);
+      $label = $('<label />')
+        .text('Automatic Translation')
+        .appendTo($li);
+
       $input = $('<input type="checkbox" />').data('option', 'translate-automatic').attr('id','translate-automatic');
+      $input.appendTo($label);
       columnCheckboxes.push($input);
-      $input.appendTo($li);
-      $('<label />')
-          .text('Automatic Translation')
-          .appendTo($li);
-      $('</input>').appendTo($li);      
-      
+
       $li = $('<li />').appendTo($menu);
-      $input = $('<input type="checkbox">').data('option', 'translate-manual').attr('id','translate-manual');
-      $input.appendTo($li);
-      columnCheckboxes.push($input);
-      $('<label />')
+      $label = $('<label />')
           .text('Manual Translation')
           .appendTo($li);
+
+      $input = $('<input type="checkbox" />').data('option', 'translate-manual').attr('id','translate-manual');
+      $input.appendTo($label);
+      columnCheckboxes.push($input);
       
       $li = $('<li />').appendTo($menu);
-      $input = $('<input type="checkbox">').data('option', 'transcript').attr('id','transcript');
-      $input.appendTo($li);
-      columnCheckboxes.push($input);
-      $('<label />')
+      $label = $('<label />')
           .text('Transcription')
           .appendTo($li);
 
-      $li = $('<li />').appendTo($menu);
-      $input = $('<input type="checkbox">').data('option', 'translate-no').attr('id','translate-no');
+      $input = $('<input type="checkbox">').data('option', 'transcript').attr('id','transcript');
+      $input.appendTo($label);
       columnCheckboxes.push($input);
-      $input.appendTo($li);
-      $('<label />')
+
+      $li = $('<li />').appendTo($menu);
+      $label = $('<label />')
           .text('Non Translatable')
           .appendTo($li);
 
-      /* $li = $('<li />').data('option', 'autoresize').appendTo($menu);
+      $input = $('<input type="checkbox">').data('option', 'translate-no').attr('id','translate-no');
+      columnCheckboxes.push($input);
+      $input.appendTo($label);
+
+      //$li = $('<li />').data('option', 'autoresize').appendTo($menu);
       $input = $('<input type="checkbox" />').data('option', 'autoresize').attr('id','slick-option-autoresize');
       $input.appendTo($li);
       $('<label />')
@@ -4786,7 +4797,7 @@ my.SlickGrid = Backbone.View.extend({
       if (grid.getOptions().forceFitColumns) {
         $input.attr('checked', 'checked');
       }
-        */
+      //
       $menu.css('top', e.pageY - 10)
           .css('left', e.pageX - 10)
           .fadeIn(options.fadeSpeed);
@@ -4854,8 +4865,8 @@ my.SlickGrid = Backbone.View.extend({
         options.state.set({fitColumns:checked});
         return;
       }
-    /*
-      if (($(e.target).is('li') && !$(e.target).hasClass('divider')) ||
+      
+      //if (($(e.target).is('li') && !$(e.target).hasClass('divider')) ||
             $(e.target).is('input')) {
         if ($(e.target).is('li')){
             checkbox = $(e.target).find('input').first();
@@ -4878,15 +4889,14 @@ my.SlickGrid = Backbone.View.extend({
 
         grid.setColumns(visibleColumns);
         options.state.set({hiddenColumns:hiddenColumnsIds});
-      }
-      */
+      //}
     }
     init();
   }
   // Slick.Controls.ColumnPicker
     $.extend(true, window, { Slick:{ Controls:{ TColumnPicker:TranslateColumnPicker }}});
 })(jQuery);
-
+*/
 
 
 /*

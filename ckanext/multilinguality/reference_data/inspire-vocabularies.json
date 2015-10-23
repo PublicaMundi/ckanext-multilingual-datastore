@@ -1,0 +1,49 @@
+{
+    "Sites": {
+        "terms":{
+            "Perati": "Περατή",
+            "Mycenae": "Μυκήναι",
+            "Thebes": "Θήβαι",
+            "Knossos": "Κνωσσός",
+            "Tiryns": "Τίρυνθα",
+            "Pylos": "Πύλος",
+            "Akrotiri": "Ακρωτήρι",
+            "Achaea": "Αχαϊα",
+            "Athens": "Αθήναι",
+            "Cape Gelidonya": "Ακρωτήριο Χελιδωνίας",
+            "Ialysos": "Ιαλυσός",
+            "Isopata": "Ισοπάτα",
+            "Kato Zakro": "Κάτω Ζάκρος",
+            "Khania (Kydonia)": "Χανιά (Κυδωνία)",
+            "Kommos": "Κομμός",
+            "Phylakopi": "Φυλακωπή"
+        }
+    },
+    "Locations":{
+        "terms":{
+            "Achaea, Mainland Greece": "Αχαϊα, ηπειρωτική Ελλάδα",
+            "Aegean sea": "Αιγαίο πέλαγος",
+            "Aegean Sea": "Αιγαίο πέλαγος",
+            "Aetolia, Mainland Greece": "Αιτωλία, ηπειρωτική Ελλάδα",
+            "Aigina, Islands": "Αίγινα, Νησιά",
+            "Argolid, Mainland Greece": "Αργολίδα, ηπειρωτική Ελλάδα",
+            "Argos, Mainland Greece": "Άργος, ηπειρωτική Ελλάδα",
+            "Athens, Mainland Greece": "Αθήναι, ηπειρωτική Ελλάδα",
+            "Attica, Mainland Greece": "Αττική, ηπειρωτική Ελλάδα",
+            "Boeotia Mainland Greece": "Βοιωτία, ηπειρωτική Ελλάδα",
+            "Crete": "Κρήτη",
+            "East Crete": "Ανατολική Κρήτη",
+            "Euboea": "Εύβοια",
+            "Euboea, Mainland Greece": "Εύβοια, ηπειρωτική Ελλάδα",
+            "Islands": "Νησιά",
+            "Kea, Islands": "Κέα, Νησιά",
+            "Kos, Islands": "Κως, Νησιά",
+            "Kythera, Islands": "Κύθηρα, Νησιά",
+            "Mainland Greece": "Ηπειρωτική Ελλάδα",
+            "Melos, Islands": "Μήλος, Νησιά",
+            "Rhodes": "Ρόδος",
+            "Samos, Islands": "Σάμος, Νησιά",
+            "Thera, Islands": "Θήρα, Νησιά"
+        }
+    } 
+}

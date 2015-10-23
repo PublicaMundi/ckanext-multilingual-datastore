@@ -1,7 +1,6 @@
 {% set languages = h.get_resource_languages(res)%}
 
-    <p class="languages">
-    <ul class="dataset-resources unstyled">
+    <ul class="dataset-resources unstyled" style="display:inline-block">
     {% if languages %}
         {% for lang in languages %}
         <li>
@@ -15,6 +14,4 @@
         {% endfor %}
         {% endif %}
       </ul>
-
-    </p>
 
