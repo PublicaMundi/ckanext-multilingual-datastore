@@ -255,19 +255,11 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 #return lang_code
         return 'en'
 
-    def set_orig_language(self, res):
-        context = self._get_context()
-        #### Make decision
-        print 'setting orig language?'
-        language = self._decide_language(res, pkg)
-        data = {'id':res.get('id'), 'resource_language':language, 'format':res.get('format') }
-        return p.toolkit.get_action('resource_update')(context, data)
-
     def get_orig_language(self, res):
         available_locales = i18n.get_available_locales()
 
         res_lang = self._decide_language(res)
-        orig_lang = res.get('resource_language', res_lang)
+        orig_lang = res.get('language', res_lang)
         for locale in available_locales:
             if locale == orig_lang:
                 return locale

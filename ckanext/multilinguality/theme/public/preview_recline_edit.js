@@ -162,17 +162,9 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
       }
     },
     _onComplete: function(){
-            
-        var lang = this.options.translation_language;
-        var self = this;
-            //var columns = dataset.fields.models;
-            //var res = {id: self.options.res_trans_id, endpoint: self.options.site_url + 'api'};
-           
-            // refetch model on complete to update changes            
-            dataExplorer.model.fetch().done(function(dataset){
-                self._onRepaint(dataset.fields.models);
-            
-        });
+        dataExplorer.model.fetch();
+        //.done(function(dataset){
+        //});
     },
     _onLoad: function(){
         dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: true});
@@ -191,7 +183,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                 self._onInitializeDataExplorer(dataset);
                 
 
-                self._onComplete();   
+                //self._onComplete();   
 
                 dataset.bind('translate-no', function(col){
                     var options = {column:col.id};
@@ -222,13 +214,12 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
 
                 dataset.queryState.bind('save', function(){
                     //console.log('dataset being saved...');
-                    self.sandbox.notify('hello', 'success');
+                    //self.sandbox.notify('hello', 'success');
                     //self.sandbox.client.favoriteDataset(this.button.val()).done(self._onSuccess);
-                    self._onComplete();
+                    //self._onComplete();
                     
                     dataset.save();
                     //.done(function(){
-                        //self._onRepaint(self.options.columns);
                     //});
                 });
 
@@ -240,10 +231,11 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
 
                 self.publish_btn.click(function() {
                     //TODO: Save before publishing - something doesnt work
-                    dataset.save();
                         //function(dataset){
                      //   alert('done saving');
                     //translate.publish(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))})
+                        dataset.save();
+                        //window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'));
                         self.publishWithConfirmation(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))}); 
                     //})
                     //});
@@ -269,21 +261,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
     removeTransSuffix: function(title, lang){
         return title.substring(0, title.indexOf("-"+lang));
     },
-    _onEditor: function(column) {
-
-        //var lang = jQuery("html")[0].getAttribute('lang');
-        //var lang = jQuery('#reclinetranslate')[0].getAttribute('translation_language');
-        var lang = this.options.translation_language;
-        var extra = this.getTransSuffix(lang);
-        var pos = column.id.indexOf(extra);
-        if (pos > -1){
-            return  Slick.Editors.Text
-        }
-        else{
-            return null;
-        }
-    },
-    
     _onInitializeDataExplorer: function (dataset) {
       views = [
         {
@@ -291,7 +268,8 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
           label: 'Grid',
           view: new recline.View.SlickGrid({
             model: dataset,
-            state: { gridOptions: {editable:true, editorFactory: {getEditor:this._onEditor} } }
+            state: { gridOptions: {editable: true} }
+            //state: { gridOptions: {editable:true, editorFactory: {getEditor:this._onEditor} } }
           })
         },
         
@@ -316,7 +294,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
           readOnly: true,
         }
       });
-  
     },
 
     _normalizeFormat: function (format) {
@@ -477,80 +454,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
     /* Event handler for the cancel event */
     _onConfirmCancel: function (event) {
       this.modal.modal('hide');
-    },
-    _onRepaint: function(columns){
-        var header = jQuery(".data-view-container .slick-header .slick-column-name");
-        var self = this;
-        
-        for (var key in columns){
-
-            var column = columns[key].attributes;
-            var label = column.label;
-            var mode = column.status;
-        
-            var lang = self.options.translation_language;
-            var extra = self.getTransSuffix(lang);
-            header.each(function(idx){
-                var col = jQuery(this);
-                if (col.text() === label){
-                    if (mode === 'no-translate'){
-                        col.parent().css("background-color","#d7314c");
-                    }
-                    else if (mode === 'manual'){
-                        col.parent().css("background-color","#67da5e");
-                    }
-                    else if (mode === 'automatic'){
-                        col.parent().css("background-color","#e9e580");
-                    }
-                    else if (mode === 'transcription'){
-                        col.parent().css("background-color","#6691d8");
-                    }
-                    else{
-                        //col.parent().css("background-color","#ccc");
-                    }
-                }
-            
-                });
-            }
-    },
-    _onRepaintOld: function(columns){
-        var header = jQuery(".data-view-container .slick-header .slick-column-name");
-        var self = this;
-        for (var key in columns){
-            var mode = columns[key];
-            //console.log('key');
-            //console.log(key);
-        //    console.log(col);
-        //}
-        
-        var lang = self.options.translation_language;
-        var extra = self.getTransSuffix(lang);
-        header.each(function(idx){
-            var col = jQuery(this);
-            //console.log(col.text());
-            //col.parent().css("background-image", "none"); 
-            //col.parent().css("background-color","red");
-            if (col.text().startsWith(key)){
-                if (mode === 'no-translate'){
-                    col.parent().css("background-color","#d7314c");
-                }
-                else if (mode === 'manual'){
-                    col.parent().css("background-color","#67da5e");
-                }
-                else if (mode === 'automatic'){
-                    col.parent().css("background-color","#e9e580");
-                }
-                else if (mode === 'transcription'){
-                    col.parent().css("background-color","#6691d8");
-                }
-                else{
-                    col.parent().css("background-color","#666666");
-                }
-            }
-        
-            });
-            }
-        }
+    }
 
   };
 });

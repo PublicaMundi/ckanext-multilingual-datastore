@@ -31,10 +31,6 @@ body {
 .slick-contextmenu input{
     margin: 2px 5px 0 5px;
 }
-.recline-slickgrid .slick-header-columns .slick-header-column{
-    background: '#666';
-    background-image: none;
-}
 .divDemoBody  {
     width: 60%;
     margin-left: auto;
@@ -57,4 +53,63 @@ body {
 
 .divButton {
     padding-top: 12px;
+}
+
+.btn{
+    background-image: none;
+    border-radius:0;
+    box-shadow: none;
+}
+
+.btn-group .btn:last-child{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-group .btn:first-child{
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.header .recline-pager .pagination .active a{
+}
+.header .recline-pager .pagination input{
+    border-radius: 0;
+    padding: 3px;
+    margin-top: -2px;
+}
+.pagination li:last-child a{
+    border-radius: 0;
+}
+
+.pagination li:first-child a{
+    border-radius: 0;
+}
+.header .add-on{
+    border-radius: 0;
+}
+.modal{
+    border-radius: 0;
+}
+
+/* Columns */
+
+.recline-slickgrid .slick-header-columns .slick-header-column{
+    background: '#666';
+    background-image: none;
+}
+
+.column-default{
+    //background-color: #fff;
+}
+.column-no-translate{
+    background-color: #666666 !important;
+}
+.column-manual{
+    background-color: #67da5e !important;
+}
+.column-automatic{
+    background-color: #e9e580 !important;
+}
+.column-transcription{
+    background-color: #6691d8 !important;
 }

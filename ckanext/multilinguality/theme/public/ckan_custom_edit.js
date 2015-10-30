@@ -37,34 +37,27 @@ if (isNodeModule) {
   // Like search but supports ReclineJS style query structure
   //
   // Primarily for use by Recline backend below
-
-  my.Client.prototype.datastoreQuery = function(queryObj, cb) {
+  my.Client.prototype.datastoreQueryTrans = function(queryObj, cb) {
+    console.log('FETCHING'); 
     var actualQuery = my._normalizeQuery(queryObj);
+    var lang = queryObj.translation_language;
+    
+    actualQuery.language = lang;
+    actualQuery.edit_mode = true;
+
     var self = this;
-    // query original resource
-    this.action('datastore_search', actualQuery, function(err, results) {
+
+    this.action('translate_resource_search', actualQuery, function(err, results) {
       if (err) {
         cb(err);
         return;
       }
-      var transQuery = {
-          limit: actualQuery.limit,
-          offset: actualQuery.offset,
-          sort: actualQuery.sort,
-          resource_id: queryObj.translation_resource,
-      }
-      // query translation resource
-      self.action('datastore_search', transQuery, function(err2, results2) {
-        if (err2) {
-            cb(err2);
-            return;
-        }
 
-        var resQuery = {
+      var resQuery = {
             id: queryObj.translation_resource
         }
-        // query translation resource metadata to get translation titles
-        self.action('resource_show', resQuery, function(err3, results3) {
+
+         self.action('resource_show', resQuery, function(err3, results3) {
         if (err3) {
             cb(err3);
             return;
@@ -74,65 +67,67 @@ if (isNodeModule) {
             try{
                 translation_columns = JSON.parse(results3.result.translation_columns); 
                 translation_columns_status = JSON.parse(results3.result.translation_columns_status
-                    ); 
+                ); 
             }
             catch(err) {
                console.log('ERROR');
               console.log(err); 
             }
+    //queryObj.translation_columns = translation_columns;
+        
+       // map ckan types to our usual types ...
+      var fields = _.map(results.result.fields, function(field) {
+        field.type = field.type in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.type] : field.type;
+        //field.state = field.state in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.state] : field.state;
+        
+        var label = field.id.substring(0, field.id.indexOf('-'+lang));
+        
+        field.status = label in translation_columns_status ? translation_columns_status[label] : 'default';
+        field.label = label in translation_columns ? translation_columns[label] : field.id; 
+        field.sortable = label.length === 0 ? true : false;
+        field.translation_field = label.length === 0 ? false : true;
+        return field;
 
-      // map ckan types to our usual types ...
+      });
+     
+      var out = {
+            total: results.result.total,
+            //fields: fields,
+            fields: results.result.fields,
+            hits: results.result.records,
+            };
+
+      cb(null, out);
+
+    });
+   });
+  };
+
+  my.Client.prototype.datastoreQuery = function(queryObj, cb) {
+    var actualQuery = my._normalizeQuery(queryObj);
+    var self = this;
+    this.action('datastore_search', actualQuery, function(err, results) {
+      if (err) {
+        cb(err);
+        return;
+      }
+            
+       // map ckan types to our usual types ...
       var fields = _.map(results.result.fields, function(field) {
         field.type = field.type in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.type] : field.type;
         //field.state = field.state in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.state] : field.state;
         return field;
       });
-     var fields2 = _.map(results2.result.fields, function(field) {
-        field.type = field.type in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.type] : field.type;
-        //field.state = field.state in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.state] : field.state;
-        return field;
-      });
-        var records = [];
-        new_fields = []
-        fields_temp = fields2.slice(0);
-        fields.forEach(function(fld, idx1){
-            new_fields.push(fld);
-            fields_temp.forEach(function(fld2, idx2){
-                var extra = fld2.id+'-'+queryObj.translation_language;
-                if (fld.id == fld2.id && fld.id !== '_id'){
-                    var new_fld = {
-                            'id': extra,
-                            'label': translation_columns[fld2.id]?translation_columns[fld2.id]:extra,
-                            'sortable': false,
-                            'field': extra,
-                            'status': translation_columns_status[fld2.id],
-                            'type': 'text'
-                        };
-                    new_fields.push(new_fld);
-                }
-            });
-        });
-          
-        results.result.records.forEach(function(rc, idx){
-            fields2.forEach(function(fld2, idx2) {
-            var extra = fld2.id+'-'+queryObj.translation_language;
-                    if (fld2['id'] !== '_id'){
-                        var val = results2.result.records[idx][fld2['id']];
-                        rc[extra] = val; 
-                    }
-                });
-                records.push(rc);
-        });
+     
         var out = {
             total: results.result.total,
-            fields: new_fields,
-            hits: records
+            fields: results.result.fields,
+            hits: results.result.records,
             };
+        
 
       cb(null, out);
-    });
 
-    });
    });
   };
 
@@ -144,6 +139,8 @@ if (isNodeModule) {
     actualQuery['force'] = true;
     //actualQuery['records'] = 
     var updates = queryObj.updates;
+    console.log('QueryObj');
+    console.log(queryObj);
     actualQuery['resource_id'] = queryObj.translation_resource;
     //records = actualQuery.records;
     var records = [];
@@ -153,6 +150,7 @@ if (isNodeModule) {
     var extra = '-' + queryObj.translation_language;
     var new_updates = [];
     updates.forEach(function(upd, idx){
+        console.log(upd);
         var it = {};
         it['_id'] = upd['_id'];
         for (key in upd){
@@ -165,6 +163,8 @@ if (isNodeModule) {
         new_updates.push(it);
     });
     actualQuery['records'] = new_updates;
+    console.log('Actualquery');
+    console.log(actualQuery);
     this.action('datastore_upsert', actualQuery, function(err, results) {
       if (err) {
         cb(err);
@@ -309,7 +309,7 @@ if (isNodeModule) {
 
     if (queryObj.sort && queryObj.sort.length > 0) {
       var _tmp = _.map(queryObj.sort, function(sortObj) {
-        return sortObj.field + ' ' + (sortObj.order || '');
+        return '"'+ sortObj.field + '" ' + (sortObj.order || '');
       });
       actualQuery.sort = _tmp.join(',');
     }
@@ -375,9 +375,12 @@ recline.Backend.CkanTranslateEdit = recline.Backend.CkanTranslateEdit || {};
   // ### fetch
   my.fetch = function(dataset) {
     var dfd = new Deferred();
+    console.log('hereo');
+    console.log(dataset);
 
     my.query({}, dataset)
       .done(function(data) {
+
         dfd.resolve({
           fields: data.fields,
           records: data.hits
@@ -407,32 +410,55 @@ recline.Backend.CkanTranslateEdit = recline.Backend.CkanTranslateEdit || {};
       dataset.id = out.resource_id;
       wrapper = new CKAN.Client(out.endpoint);
     }
+    console.log('dataset');
+    console.log(dataset);
     queryObj.resource_id = dataset.id;
     
     //queryObj.translation_column = dataset.translation_column;
     queryObj.translation_language = dataset.translation_language;
     try{
+            //queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
             queryObj.translation_resource = JSON.parse(dataset.has_translations)[dataset.translation_language]; 
         }
         catch(err) {
             queryObj.translation_resource = {}
             
         }
+
+
     //wrapper.datastoreUpdate(queryObj,function(err, out){
     //});
-      wrapper.datastoreQuery(queryObj, function(err, out) {
+    wrapper.datastoreQueryTrans(queryObj, function(err, out) {
       if (err) {
-        dfd.reject(err);
+        if (err.code === 409){
+            console.log('im error');
+            console.log(err.code);
+            //resource doesnt exist in language so fetch original
+            wrapper.datastoreQuery(queryObj, function(err, out) {
+                if (err) {
+                    dfd.reject(err);
+                } else {
+                    dfd.resolve(out);
+
+                }
+            });
+        }
+        //dfd.reject(err);
       } else {
         dfd.resolve(out);
 
       }
+      console.log('hey im done');
+      console.log(err);
+      console.log(out);
     });
     return dfd.promise();
   };
 
   my.save = function(queryObj, dataset) {
       var dfd = new Deferred(), wrapper;
+      console.log('dfd');
+      console.log(dfd);
       if (dataset.endpoint) {
           wrapper = new CKAN.Client(dataset.endpoint);
       }

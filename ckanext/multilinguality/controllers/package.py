@@ -27,8 +27,6 @@ class UserController(BaseController):
         img tag where the image is loaded directly or an iframe that embeds a
         webpage, recline or a pdf preview.
         '''
-        print 'OOOO'
-        print resource_id
         context = {
             'model': model,
             'session': model.Session,

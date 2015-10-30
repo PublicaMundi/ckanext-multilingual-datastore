@@ -117,6 +117,7 @@ def translate_resource_search_schema():
     schema = {
         'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
         'language': [not_missing, unicode],
+        'edit_mode': [ignore_missing, boolean_validator],
         'q': [ignore_missing, unicode],
         'plain': [ignore_missing, boolean_validator],
         'filters': [ignore_missing, json_validator],

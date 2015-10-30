@@ -38,6 +38,7 @@ if (isNodeModule) {
   //
   // Primarily for use by Recline backend below
   my.Client.prototype.datastoreQueryTrans = function(queryObj, cb) {
+    console.log('FETCHING'); 
     var actualQuery = my._normalizeQuery(queryObj);
     actualQuery.language = queryObj.translation_language;
     var self = this;
@@ -272,7 +273,7 @@ if (isNodeModule) {
 
     if (queryObj.sort && queryObj.sort.length > 0) {
       var _tmp = _.map(queryObj.sort, function(sortObj) {
-        return sortObj.field + ' ' + (sortObj.order || '');
+        return '"'+ sortObj.field + '" ' + (sortObj.order || '');
       });
       actualQuery.sort = _tmp.join(',');
     }
