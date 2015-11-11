@@ -55,6 +55,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
 
     def can_preview(self, data_dict):
         # if the resource is in the datastore then we can preview it with recline
+        #return True
         if data_dict['resource'].get('datastore_active'):
             return True
         format_lower = data_dict['resource']['format'].lower()
@@ -86,21 +87,15 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         return mapper
 
     def after_update(self, context, data_dict):
-        print "AFTER UPDATE"
-        print data_dict
         # TODO: wrong data_dict output
         # doesnt contain resources
         return data_dict
         new_res_list = []
         for res in data_dict.get('resources'):
             if res.get('translation_resource'):
-                print 'TRANS RES'
-                print res
                 found = False
                 for nres in data_dict.get('resources'):
                     if nres.get('id') == res.get('translation_parent_id') and not nres.get('state') == 'deleted':
-                        print 'found daddy'
-                        print nres
                         found = True
                         new_res_list.append(res)
                         break
@@ -108,7 +103,6 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 new_res_list.append(res)
             break
         data_dict.update({'resources': new_res_list})
-
 
         return data_dict
         '''
@@ -146,8 +140,12 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
 
     def after_delete(self, context, data_dict):
         print 'AFTER DELETE'
+        #return data_dict
 
     def after_show(self, context, data_dict):
+        return data_dict
+        #print context
+         
         user_orgs = p.toolkit.get_action('organization_list_for_user')(context, {'id':context.get('user')})
         org_user = False
         if data_dict.get('owner_org') in [u.get('id') for u in user_orgs]:
@@ -176,6 +174,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def before_view(self, data_dict):
         # TODO: Need to cut extra translation resources here
         # so they are not visible in UI/other API functions
+        #return data_dict
         return data_dict
         '''
         for k,v in data_dict.iteritems():
@@ -216,7 +215,8 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         return {
                 'model':model,
                 'session':model.Session,
-                'ignore_auth':True,
+                #'user': model.User,
+                'ignore_auth':False,
                 'api_version':3,
                 }
 

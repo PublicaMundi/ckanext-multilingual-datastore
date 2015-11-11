@@ -1,8 +1,4 @@
 // recline preview module
-var dataExplorer;
-//var LANGUAGE =  'fr';
-var errorMsg;
-
 this.ckan.module('recline_translate_read_preview', function (jQuery, _) {  
   return {
     options: {
@@ -16,22 +12,14 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
     },
 
     initialize: function () {
-        console.log('HELLO');
-        console.log(jQuery("html")[0].getAttribute('lang'));
       jQuery.proxyAll(this, /_on/);
-      // hack to make leaflet use a particular location to look for images
-      this.button = jQuery("#button");
-      var html = '<a href="#" class="btn" id="saveClicked">Save</a> <a href="#" class="btn btn-primary" id="publishClicked">Publish</a>';
-
-      this.buttons = jQuery("#saveButtons").html(html);
-      //this.buttons.hide();
-      this.buttons.show();
-      this.save_btn = jQuery("#saveClicked");
-      this.publish_btn = jQuery("#publishClicked");
       this.el.ready(this._onReady);
+      // hack to make leaflet use a particular location to look for images
+      //L.Icon.Default.imagePath = this.options.site_url + 'vendor/leaflet/0.4.4/images';
     },
+
     _onReady: function() {
-      this.loadPreviewDialog(preload_resource);  
+      this.loadPreviewDialog(preload_resource);
     },
 
     // **Public: Loads a data preview**
@@ -50,7 +38,7 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
         msg = msg || _('error loading preview');
         window.parent.ckan.pubsub.publish('data-viewer-error', msg);
       }
-
+      
       recline.Backend.DataProxy.timeout = 10000;
 
       // 2 situations
@@ -69,20 +57,12 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
           resourceData.formatNormalized = ext[ext.length-1];
         }
       }
-      var dataset; 
-      //, errorMsg;
-      var lang = jQuery("html")[0].getAttribute('lang');
-      // Datastore
+
+      var errorMsg, dataset;
+      var lang = this.options.language;
+        console.log('lang');
+        console.log(lang);
       if (resourceData.datastore_active) {
-        
-        // Set endpoint of the resource to the datastore api (so it can locate
-        // CKAN DataStore)
-        resourceData.endpoint = jQuery('body').data('site-root') + 'api';
-         
-        resourceData.translation_language = lang;
-         
-         
-        errorMsg = this.options.i18n.errorLoadingPreview + ': ' + this.options.i18n.errorDataStore;
         
         translate = new TranslateHelper(resourceData, lang); 
         var trans_lang; 
@@ -91,51 +71,45 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
             trans_lang = JSON.parse(resourceData.has_translations)[lang];
         }
         catch(err) {
-            
+            trans_lang = null; 
         }
-        var orig_lang = resourceData.resource_language || 'en';
         console.log('trasn');
-        console.log(lang);
-        console.log(orig_lang);
-        console.log(resourceData);
-
-        //resourceData = translate.delete(function() {}, function() { });
-        if (orig_lang == lang || ("translation_resource" in resourceData)){
-            //if (!("translation_resource" in resourceData)){
+        console.log(trans_lang);
+  
+         if (trans_lang){
+            resourceData.translation_language = lang;
+            resourceData.backend = 'ckanTranslateRead';
+         }
+         else{ 
             resourceData.backend =  'ckan';
-            dataset = new recline.Model.Dataset(resourceData);
-            var translationResource = null;
-            this.initializeDataset(dataset, resourceData);
-        //}
-        //else{
-            //resourceData.backend =  'ckan';
-        //}    alert('Cannot translate in origin language');
-        }
-        else{
-            resourceData.backend =  'ckanTranslateRead';
-            dataset = new recline.Model.Dataset(resourceData);
-            console.log('dataset');
-            console.log(dataset);
+         }
+        // Set endpoint of the resource to the datastore api (so it can locate
+        // CKAN DataStore)
+        resourceData.endpoint = jQuery('body').data('site-root') + 'api';
+        dataset = new recline.Model.Dataset(resourceData);
+        errorMsg = this.options.i18n.errorLoadingPreview + ': ' + this.options.i18n.errorDataStore;
+        dataset.fetch()
+          .done(function(dataset){
+              self.initializeDataExplorer(dataset);
+          })
+          .fail(function(error){
+            if (error.message) errorMsg += ' (' + error.message + ')';
+            showError(errorMsg);
+          });
 
-        var translationResource = null;
-        this.initializeDataset(dataset, resourceData);
-        }
-      } 
-      // CSV/XLS
-      else if (resourceData.formatNormalized in {'csv': '', 'xls': ''}) {
+      } else if (resourceData.formatNormalized in {'csv': '', 'xls': ''}) {
+        // set format as this is used by Recline in setting format for DataProxy
         resourceData.format = resourceData.formatNormalized;
         resourceData.backend = 'dataproxy';
         dataset = new recline.Model.Dataset(resourceData);
-        //console.log(dataset);
         errorMsg = this.options.i18n.errorLoadingPreview + ': ' +this.options.i18n.errorDataProxy;
         dataset.fetch()
           .done(function(dataset){
             dataset.bind('query:fail', function (error) {
-              console.log('error');
-              console.log(error);
               jQuery('.data-view-container', self.el).hide();
               jQuery('.header', self.el).hide();
             });
+
             self.initializeDataExplorer(dataset);
           })
           .fail(function(error){
@@ -144,89 +118,31 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
           });
       }
     },
-    initializeDataset: function(dataset, resourceData) {
-        var self = this;
-        
-        onComplete = function(){
-            
-        //dataExplorer.clearNotifications();
-        //var selfi = this;
-        var lang = jQuery("html")[0].getAttribute('lang');
-        dataExplorer.model.fetch().done(function(dataset){
-            console.log('data');
-            console.log(dataset);
-            var has_translations = dataset.attributes.has_translations;
-            var res_id;
-            console.log('hastransl');
-            console.log(has_translations);
-            console.log(lang);
-            try{
-                console.log('trying');
-                res_id = JSON.parse(has_translations)[lang];
-            }
-            catch(err) {
-                
-            }
-                console.log(res_id);
-                console.log(dataset.attributes.endpoint);
-                var res =translate.show_resource({endpoint:dataset.attributes.endpoint, id:res_id}).done(function(result){
-                    console.log('res');
-                    var result = result.result;
-                    console.log(result);
-                    var columns = {};
-                    try{
-                        console.log('trying2');
-                        columns = JSON.parse(result.translation_columns);
-                    }
-                    catch(err2){
-                        
-                    }
-                        console.log(columns);
-                        console.log('sef');
-                        console.log(self);
-                        //jQuery(columns).each(function(col, idx){
-                });
-        });
-        //repaint(columns);
-    };
-    onLoad = function(){
-        dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: true});
-        //setTimeout(function(){ dataExplorer.model.fetch()}, 3000);
-    };
 
-     console.log('!!!! 4');
-     function showError(msg){
-        msg = msg || _('error loading preview');
-        window.parent.ckan.pubsub.publish('data-viewer-error', msg);
-      }
-     console.log('fetchind');
-     console.log(dataset);
-        dataset.fetch()
-              .done(function(dataset1){
-                var fields1 = dataset1.fields.models;
-                var records1 = dataset1.records.models;
-                
-                self.initializeDataExplorer(dataset1);
-                
-          })
-          .fail(function(error){
-            if (error.message) errorMsg += ' (' + error.message + ')';
-            showError(errorMsg);
-          });
-    },
-    
     initializeDataExplorer: function (dataset) {
       var views = [
         {
           id: 'grid',
           label: 'Grid',
           view: new recline.View.SlickGrid({
-            model: dataset,
-            state: {  }
+            model: dataset
           })
         },
-        
-        ];
+        {
+          id: 'graph',
+          label: 'Graph',
+          view: new recline.View.Graph({
+            model: dataset
+          })
+        },
+        {
+          id: 'map',
+          label: 'Map',
+          view: new recline.View.Map({
+            model: dataset
+          })
+        }
+      ];
 
       var sidebarViews = [
         {
@@ -237,19 +153,17 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
           })
         }
       ];
-        console.log('dataset');
-        console.log(dataset);
-      dataExplorer = new recline.View.MultiView({
+
+      var dataExplorer = new recline.View.MultiView({
         el: this.el,
         model: dataset,
         views: views,
         sidebarViews: sidebarViews,
         config: {
-          readOnly: true,
+          readOnly: true
         }
       });
-    
-      
+
     },
     normalizeFormat: function (format) {
       var out = format.toLowerCase();
@@ -263,10 +177,6 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
       } else {
         return url;
       }
-    },
-      };
+    }
+  };
 });
-
-
-
-

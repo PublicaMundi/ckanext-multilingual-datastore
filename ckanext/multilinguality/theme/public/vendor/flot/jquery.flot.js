@@ -1750,6 +1750,8 @@
                         y += line.height/2 + offset;
                         offset += line.height;
 
+                        //  new jquery (>1.9?) versions dont support this
+                        /*
                         if ($.browser.opera) {
                             // FIXME: UGLY BROWSER DETECTION
                             // round the coordinates since Opera
@@ -1761,6 +1763,7 @@
                             x = Math.floor(x);
                             y = Math.ceil(y - 2);
                         }
+                        */
                         ctx.fillText(line.text, x, y);
                     }
                 }

@@ -19,7 +19,8 @@ function TranslateHelper (resource, lang){
         console.log(resource);
         var url = resource.endpoint + '/3/action/translate_resource_create';
         
-        var package_id = this._strip_package_id(resource.url);
+        //var package_id = this._strip_package_id(resource.url);
+        var package_id = resource.resource_package_id;
         console.log(package_id);
         var options = {
             resource_id:resource.id,
@@ -216,6 +217,7 @@ function TranslateHelper (resource, lang){
             },
         });
     };
+    /*
     this._strip_package_id = function(url) {
         // CKAN 2.2 doesnt provide package_id in resource_show
         // strip it from url
@@ -226,7 +228,7 @@ function TranslateHelper (resource, lang){
         return url.substring(start, end);
 
     };
-    
+    */
 
 
 };

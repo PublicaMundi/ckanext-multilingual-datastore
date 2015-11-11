@@ -2,19 +2,34 @@ import json
 
 import ckan.plugins as p
 import ckan.lib.navl.dictization_functions as df
+from ckan.logic.validators import (package_id_exists,
+                                   package_id_or_name_exists,
+                                   int_validator,
+                                   is_positive_integer,
+                                   boolean_validator,
+                                   resource_id_exists,
+                                   )
+from ckan.lib.navl.validators import (ignore_missing,
+                                      keep_extras,
+                                      not_empty,
+                                      empty,
+                                      ignore,
+                                      if_empty_same_as,
+                                      not_missing,
+                                      ignore_empty
+                                     )
+from formencode.validators import OneOf
+from ckan.common import _
 
-get_validator = p.toolkit.get_validator
+Invalid = df.Invalid
 
-not_missing = get_validator('not_missing')
-not_empty = get_validator('not_empty')
-resource_id_exists = get_validator('resource_id_exists')
-package_id_exists = get_validator('package_id_exists')
-package_id_or_name_exists = get_validator('package_id_or_name_exists')
-ignore_missing = get_validator('ignore_missing')
-empty = get_validator('empty')
-boolean_validator = get_validator('boolean_validator')
-int_validator = get_validator('int_validator')
-OneOf = get_validator('OneOf')
+def lang_length_validator(value, context):
+    print len(value)
+    if not len(value) == 2:
+        raise Invalid(
+            _('Language "%s" should be provided in ISO-639-1 (2 characters)') % (value)
+        )
+    return value
 
 def rename(old, new):
     '''
@@ -69,10 +84,11 @@ def translate_resource_create_schema():
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
         'mode': [ignore_missing, unicode, OneOf(
             ['automatic', 'manual', 'transcription'])],
-        'language': [not_missing, unicode
+        'language': [not_missing, unicode ],
+        #lang_length_validator
             #OneOf(
             #['en', 'el','es', 'de', 'fr'])
-            ],
+            #],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]
     }
@@ -80,8 +96,9 @@ def translate_resource_create_schema():
 
 def translate_resource_update_schema():
     schema = {
-        'resource_id': [not_missing, not_empty, unicode],
+        'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
         'language': [not_missing, unicode],
+            #, lang_length_validator],
         'column_name': [not_missing, not_empty, unicode],
         'title_translation': [ignore_missing, unicode],
         'force': [ignore_missing, boolean_validator],
@@ -97,6 +114,7 @@ def translate_resource_delete_schema():
     schema = {
         'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
         'language': [not_missing, unicode],
+        #, lang_length_validator],
         'column_name': [ignore_missing, unicode],
         'force': [ignore_missing, boolean_validator],
         '__junk': [empty],
@@ -108,6 +126,7 @@ def translate_resource_publish_schema():
     schema = {
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
         'language': [not_missing, unicode],
+        #, lang_length_validator],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]
     }
@@ -117,6 +136,7 @@ def translate_resource_search_schema():
     schema = {
         'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
         'language': [not_missing, unicode],
+        #, lang_length_validator],
         'edit_mode': [ignore_missing, boolean_validator],
         'q': [ignore_missing, unicode],
         'plain': [ignore_missing, boolean_validator],

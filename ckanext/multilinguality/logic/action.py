@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import os
 import shlex
@@ -6,19 +8,41 @@ import pylons
 import sqlalchemy
 import json
 import pprint
+import gettext
+from transliterate import translit
 
-from unidecode import unidecode
 import ckan.lib.navl.dictization_functions
+import ckan.lib.i18n as i18n
 import ckan.logic as logic
 import ckan.plugins as p
+from ckan.common import _
 import ckanext.multilinguality.logic.schema as dsschema
-import ckanext.multilinguality.vocabularies as closed_vocabularies
 
 import uuid
 
-PAGE_STEP = 100
+PAGE_STEP = int(pylons.config.get('ckanext.multilingual.resources.page_step', 100))
+from transliterate.base import TranslitLanguagePack, registry
 
-#from ckan.lib.celery_app import celery
+class GreekLanguagePack(TranslitLanguagePack):
+    language_code = "el_EL"
+    language_name = "Greek"
+    mapping = (
+        u"abgdezhiklmnxoprstyfouABGDEZHIKLMNXOPRSTYFOU",
+        u"αβγδεζηικλμνξοπρστυφωυΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΩΘ",
+        )
+    reversed_specific_mapping = (
+        u"ηιΗΙωΩυΥ",
+        u"iiIIoOuU"
+    )
+    pre_processor_mapping = {
+        u"th": u"θ",
+        u"ch": u"χ",
+        u"ps": u"ψ",
+        u"TH": u"Θ",
+        u"CH": u"Χ",
+        u"PS": u"Ψ",
+    }
+
 if not os.environ.get('DATASTORE_LOAD'):
     import paste.deploy.converters as converters
     ValidationError = p.toolkit.ValidationError
@@ -33,7 +57,6 @@ log = logging.getLogger(__name__)
 _get_or_bust = logic.get_or_bust
 _validate = ckan.lib.navl.dictization_functions.validate
 
-
 def translate_resource_create(context, data_dict):
     '''Creates a new resource and creates a datastore table associated to
     the original resource whose id is provided
@@ -43,6 +66,8 @@ def translate_resource_create(context, data_dict):
 
     schema = context.get('schema', dsschema.translate_resource_create_schema())
     data_dict, errors = _validate(data_dict, schema, context)
+    print 'errors'
+    print errors
     if errors:
         raise p.toolkit.ValidationError(errors)
 
@@ -57,10 +82,10 @@ def translate_resource_create(context, data_dict):
     has_translations = json.loads(res.get('has_translations','{}'))
     orig_language = res.get('language', 'en')
     if orig_language == data_dict.get('language'):
-        raise p.toolkit.ValidationError('Cannot translate resource {0} in origin language {1}'.format(data_dict.get('id'),data_dict.get('language')))
+        raise p.toolkit.ValidationError(u'Cannot translate resource {0} in origin language {1}'.format(data_dict.get('id'),data_dict.get('language')))
     if data_dict.get('language') in has_translations.keys():
         log.info('Resource {0} in language {1} already exists'.format(data_dict.get('id'), data_dict.get('language')))
-        raise p.toolkit.ValidationError('Translation resource in language {0} already exists'.format(data_dict.get('language')))
+        raise p.toolkit.ValidationError(u'Translation resource in language {0} already exists'.format(data_dict.get('language')))
 
     ### TODO: resource_show doesnt display package_id until CKAN 2.3
     # Now demanding package_id parameter
@@ -77,12 +102,15 @@ def translate_resource_create(context, data_dict):
     for field in fields:
         col = {field.get('id')}
         if field.get('type') != 'text':
-            columns_status.update({field.get('id'):'no-translate'})
+            columns_status.update({field.get('id').encode('utf-8'):'no-translate'})
         else:
-            columns_status.update({field.get('id'):''})
+            columns_status.update({field.get('id').encode('utf-8'):''})
 
     columns_status = json.dumps(columns_status)
-
+    print 'data dict'
+    print data_dict
+    #pkg = p.toolkit.get_action('package_show')(context, {'id':data_dict.get('package_id')})
+    print new_res_name
     new_res = p.toolkit.get_action('resource_create')(context,
             {
                 'package_id': data_dict.get('package_id'),
@@ -99,6 +127,7 @@ def translate_resource_create(context, data_dict):
                 'translation_columns': '{}',
             })
 
+    
     # Update original resource metadata
     has_translations.update({data_dict.get('language'):new_res.get('id')})
     res.update({
@@ -106,6 +135,13 @@ def translate_resource_create(context, data_dict):
             'language': res.get('language', 'en'),
             })
     res = p.toolkit.get_action('resource_update')(context, res)
+    print 'updated orig resource'
+    print res
+    print 'new res'
+    print new_res
+    if not new_res.get('name') == new_res_name:
+        #something went wrong with resource_create
+        raise ValidationError(_(u'Translation resource creation failed.'))
 
     # Initialize empty datastore table associated to resource
     new_ds = p.toolkit.get_action('datastore_create')(context,
@@ -139,26 +175,29 @@ def translate_resource_update(context, data_dict):
     print original_res
     # Check if candidate resource is translation resource
     if original_res.get('translation_resource'):
-        raise p.toolkit.ValidationError('Resource "{0}" is translation resource, please provide original resource id'.format(original_res.get('id')))
+        raise p.toolkit.ValidationError(u'Resource "{0}" is translation resource, please provide original resource id'.format(original_res.get('id')))
 
     language = data_dict.get('language')
 
     has_translations = json.loads(original_res.get('has_translations','{}'))
     orig_language = original_res.get('language', 'en')
     if orig_language == language:
-        raise p.toolkit.ValidationError('Cannot update resource {0} in original language {1}'.format(data_dict.get('resource_id'),language))
+        raise p.toolkit.ValidationError(u'Cannot update resource {0} in original language {1}'.format(data_dict.get('resource_id'),language))
     if not language in has_translations.keys():
         log.info('Resource {0} in language {1} doesn\'t exists'.format(data_dict.get('resource_id'), language))
-        raise p.toolkit.ValidationError('Translation resource in language {0} doesn\'t exist'.format(language))
-    
+        raise p.toolkit.ValidationError(u'Translation resource in language {0} doesn\'t exist'.format(language))
+
     resource_id = has_translations.get(language)
+    print 'before show!!!'
     res = p.toolkit.get_action('resource_show')(context, {'id': resource_id})
-    
+    print 'after show' 
     ds = p.toolkit.get_action('datastore_search')(context, {'resource_id': res.get('id')})
+    print 'after ds show1'
     original_ds = p.toolkit.get_action('datastore_search')(context, {'resource_id': original_res.get('id')})
+    print 'after ds show2'
 
     # Check if column_name exists in original table
-    col_name = data_dict.get('column_name')
+    col_name = unicode(data_dict.get('column_name'))
     title_translation = data_dict.get('title_translation')
     field_exists = False
     for field in original_ds.get('fields'):
@@ -180,12 +219,13 @@ def translate_resource_update(context, data_dict):
     #    print data_dict.get('translation')
     #    return _update_title(context, res, translation, col_name )
     #else:
+    print 'before custom'
     if mode == 'manual':
         _initialize_column(context, col_name, ds, original_ds.get('total'))
         return _translate_manual(context, res, col_name, original_ds, ds)
     elif mode == 'automatic':
         _initialize_column(context, col_name, ds, original_ds.get('total'))
-        return _translate_automatic(context, res, col_name, original_ds, ds)
+        return _translate_automatic(context, res, col_name, original_ds, ds, language)
     elif mode == 'transcription':
         _initialize_column(context, col_name, ds, original_ds.get('total'))
         _transcript(context, res, col_name, original_ds, ds)
@@ -242,15 +282,9 @@ def translate_resource_delete(context, data_dict):
         ds = p.toolkit.get_action('datastore_search')(context, {'id': resource_id})
         #total = ds.get('total')
         # Check if column_name exists in original table
-        col_name = data_dict.get('column_name')
-        field_exists = False
-        for field in ds.get('fields'):
-            if field['id'] == col_name:
-                field_exists = True
-                break
-        if not field_exists:
-            raise p.toolkit.ValidationError('Column name "{0}" does not correspond to any "{1}" table columns'.format(col_name, ds.get('resource_id')))
+        col_name = unicode(data_dict.get('column_name'))
 
+        # update metadata
         columns = json.loads(res.get('translation_columns_status','{}'))
         for k,v in columns.iteritems():
             if k == col_name:
@@ -263,35 +297,42 @@ def translate_resource_delete(context, data_dict):
             })
         res = p.toolkit.get_action('resource_update')(context, res)
 
-        print 'ASDASADSD'
+        # update data
+        field_exists = False
+        for field in ds.get('fields'):
+            if field['id'] == col_name:
+                field_exists = True
+                break
+        if not field_exists:
+            return
+            #raise p.toolkit.ValidationError(u'Column name "{0}" does not correspond to any "{1}" table columns'.format(col_name, ds.get('resource_id')))
+ 
         filters = {col_name:'*'}
         #la = _delete_column(context, data_dict.get('column_name'), ds, total)
         #return
-        print 'after initialize'
-        print col_name
         #pprint.pprint(la)
         #filters = {}
         return p.toolkit.get_action('datastore_delete')(context, {'resource_id': resource_id, 'filters':filters, 'force':True})
 
-    # Delete datastore table
-    try:
-        p.toolkit.get_action('datastore_delete')(context, {'resource_id': resource_id, 'filters':filters, 'force':True})
-    except:
-        return
+    else:
+        # Delete datastore table
+        try:
+            p.toolkit.get_action('datastore_delete')(context, {'resource_id': resource_id, 'filters':filters, 'force':True})
+        except:
+            return
 
-    # Update metadata and delete resouce
-    try:
-        has_translations = json.loads(original_res.get('has_translations'))
-    except p.toolkit.ValidationError:
-        log.info('Original resource has no translation metadata. Something went wrong...')
-
-    del has_translations[res.get('translation_language')]
-    
-    original_res.update({
-                    json.dumps(has_translations)
-                    })
-    upd_original_res = p.toolkit.get_action('resource_update')(context, original_res)
-    return p.toolkit.get_action('resource_delete')(context, {'id': resource_id})
+        # Update metadata and delete resouce
+        try:
+            has_translations = json.loads(original_res.get('has_translations'))
+        except p.toolkit.ValidationError:
+            log.info('Original resource has no translation metadata. Something went wrong...')
+        del has_translations[res.get('translation_language')]
+        
+        original_res.update({
+            'has_translations': json.dumps(has_translations)
+                        })
+        upd_original_res = p.toolkit.get_action('resource_update')(context, original_res)
+        return p.toolkit.get_action('resource_delete')(context, {'id': resource_id})
 
 def translate_resource_publish(context, data_dict):
     '''Publishes the translation resource
@@ -310,7 +351,7 @@ def translate_resource_publish(context, data_dict):
     original_res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
 
     if original_res.get('translation_resource'):
-        raise p.toolkit.ValidationError('Resource "{0}" is translation resource, please provide original resource id'.format(res.get('id')))
+        raise p.toolkit.ValidationError(u'Resource "{0}" is translation resource, please provide original resource id'.format(res.get('id')))
 
     language = data_dict.get('language')
 
@@ -318,10 +359,10 @@ def translate_resource_publish(context, data_dict):
     orig_language = original_res.get('language', 'en')
     
     if orig_language == language:
-        raise p.toolkit.ValidationError('Cannot update resource {0} in original language {1}'.format(data_dict.get('resource_id'),language))
+        raise p.toolkit.ValidationError(u'Cannot update resource {0} in original language {1}'.format(data_dict.get('resource_id'),language))
     if not language in has_translations.keys():
         log.info('Resource {0} in language {1} doesn\'t exists'.format(data_dict.get('resource_id'), language))
-        raise p.toolkit.ValidationError('Translation resource in language {0} doesn\'t exist'.format(language))
+        raise p.toolkit.ValidationError(u'Translation resource in language {0} doesn\'t exist'.format(language))
 
     resource_id = has_translations.get(language)
     res = p.toolkit.get_action('resource_show')(context, {'id': resource_id})
@@ -329,7 +370,7 @@ def translate_resource_publish(context, data_dict):
 
 
     if not res.get('translation_resource'):
-        raise p.toolkit.ValidationError('Resource "{0}" is not a translation resource'.format(res.get('id')))
+        raise p.toolkit.ValidationError(u'Resource "{0}" is not a translation resource'.format(res.get('id')))
 
     # Update resource metadata
     res.update({
@@ -357,7 +398,7 @@ def translate_resource_unpublish(context, data_dict):
     original_res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
 
     if original_res.get('translation_resource'):
-        raise p.toolkit.ValidationError('Resource "{0}" is translation resource, please provide original resource id'.format(original_res.get('id')))
+        raise p.toolkit.ValidationError(u'Resource "{0}" is translation resource, please provide original resource id'.format(original_res.get('id')))
 
     language = data_dict.get('language')
 
@@ -365,16 +406,16 @@ def translate_resource_unpublish(context, data_dict):
     orig_language = original_res.get('language', 'en')
 
     if orig_language == language:
-        raise p.toolkit.ValidationError('Cannot update resource {0} in original language {1}'.format(data_dict.get('resource_id'),language))
+        raise p.toolkit.ValidationError(u'Cannot update resource {0} in original language {1}'.format(data_dict.get('resource_id'),language))
     if not language in has_translations.keys():
         log.info('Resource {0} in language {1} doesn\'t exists'.format(data_dict.get('resource_id'), language))
-        raise p.toolkit.ValidationError('Translation resource in language {0} doesn\'t exist'.format(language))
+        raise p.toolkit.ValidationError(u'Translation resource in language {0} doesn\'t exist'.format(language))
 
     resource_id = has_translations.get(language)
     res = p.toolkit.get_action('resource_show')(context, {'id': resource_id})
 
     if not res.get('translation_resource'):
-        raise p.toolkit.ValidationError('Resource "{0}" is not a translation resource'.format(res.get('id')))
+        raise p.toolkit.ValidationError(u'Resource "{0}" is not a translation resource'.format(res.get('id')))
 
     # Update resource metadata
     res.update({
@@ -410,11 +451,11 @@ def translate_resource_search(context, data_dict):
 
     has_translations = json.loads(res.get('has_translations', '{}'))
     if not data_dict.get('language') in has_translations.keys():
-        raise p.toolkit.ValidationError('Translation resource in language {0} does not exist'.format(data_dict.get('language')))
+        raise p.toolkit.ValidationError(u'Translation resource in language {0} does not exist'.format(data_dict.get('language')))
     trans_res = p.toolkit.get_action('resource_show')(context, {'id': has_translations.get(data_dict.get('language'))})
     print data_dict
     if (not data_dict.get('edit_mode') and not trans_res.get('translation_status') == 'published'):
-        raise p.toolkit.ValidationError('Translation resource in language {0} does not exist'.format(data_dict.get('language')))
+        raise p.toolkit.ValidationError(u'Translation resource in language {0} does not exist'.format(data_dict.get('language')))
 
     ds = p.toolkit.get_action('datastore_search')(context, {'id':data_dict.get('resource_id')})
 
@@ -423,7 +464,7 @@ def translate_resource_search(context, data_dict):
     if data_dict.get('fields'):
         for field in _get_list(data_dict.get('fields')):
             if not field in original_fields:
-                raise p.toolkit.ValidationError('Requested field {0} does not exist in resource {1} table'.format(field, data_dict.get('resource_id')))
+                raise p.toolkit.ValidationError(u'Requested field {0} does not exist in resource {1} table'.format(field, data_dict.get('resource_id')))
 
     trans_ds = p.toolkit.get_action('datastore_search')(context, {'id':has_translations.get(data_dict.get('language'))})
     trans_fields = _get_field_ids(trans_ds.get('fields'))
@@ -447,7 +488,7 @@ def translate_resource_search(context, data_dict):
     params_dict = _get_params_dict(data_dict)
     ds_search_sql.update(params_dict)
     # hide sql field from result
-    del ds_search_sql['sql']
+    #del ds_search_sql['sql']
     return ds_search_sql
 
 def _create_view(context, data_dict):
@@ -464,33 +505,49 @@ def _create_view(context, data_dict):
 
     limit = data_dict.get('limit', 100)
     offset = data_dict.get('offset', 0)
-    sort = _sort(context, data_dict, [trans_columns[f] if f in trans_columns else f for f in all_fields])
-    #ts_query, rank_column = _textsearch_query(data_dict)
-    #where = _where(all_fields, data_dict)
 
+    combined_fields = []
+    for f in all_fields:
+        combined_fields.append(f)
+        if f in trans_columns:
+            combined_fields.append(trans_columns[f])
+
+    sort = _sort(context, data_dict, combined_fields)
+    ts_query, rank_column = _textsearch_query(data_dict)
+
+    #where = _whereata_dict)
+    #where_clause, where_values = _where(all_fields, data_dict)
+    where = _where(all_fields, data_dict)
+    
     sql_string = u'''SELECT {fields},
-            COUNT(*) OVER() AS "_full_count"
+            COUNT(*) OVER() AS "_full_count" {rank}
             FROM "{orig_resource}"
-            INNER JOIN "{trans_resource}"
+            LEFT JOIN "{trans_resource}"
             ON "{orig_resource}"._id = "{trans_resource}"._id
+            {query}
+            {where}
             {sort}
             OFFSET {offset}
             LIMIT {limit};'''.format(
     fields=sql_fields,
-    #rank=rank_column,
+    rank=rank_column,
     orig_resource=orig_resource,
     trans_resource=trans_resource,
-    #query=ts_query,
-    #where=where,
+    query=ts_query,
+    where=where,
     sort=sort,
     offset=offset,
     limit=limit
     )
     #sql_string = sql_string.replace('%', '%%')
+    #raise ValidationError(sql_string)
     #sql_string = sql_string.format(where=where_clause), [where_values]
     #print sql_string
     #asd
-    return sql_string
+    #return sql_string.encode('utf-8')
+    return sql_string.encode('utf-8')
+#, [where_values]
+
  
 def _create_view_edit(context, data_dict):
     '''Create view for edit from combination of fields.'''
@@ -504,17 +561,26 @@ def _create_view_edit(context, data_dict):
     selected_fields = data_dict.get('fields', all_fields)
     field_ids = _get_fields_edit(selected_fields, data_dict)
     sql_fields = u", ".join(field_ids)
-
+    
     limit = data_dict.get('limit', 100)
     offset = data_dict.get('offset', 0)
-    sort = _sort(context, data_dict, [f for f in all_fields])
+
+    combined_fields = []
+    for f in all_fields:
+        combined_fields.append(f)
+        if f in trans_columns:
+            combined_fields.append(trans_columns[f])
+
+    sort = _sort(context, data_dict, combined_fields)
+
+    #sort = _sort(context, data_dict, [f for f in all_fields])
     #ts_query, rank_column = _textsearch_query(data_dict)
     #where = _where(all_fields, data_dict)
 
     sql_string = u'''SELECT {fields},
             COUNT(*) OVER() AS "_full_count"
             FROM "{orig_resource}"
-            INNER JOIN "{trans_resource}"
+            LEFT JOIN "{trans_resource}"
             ON "{orig_resource}"._id = "{trans_resource}"._id
             {sort}
             OFFSET {offset}
@@ -529,11 +595,14 @@ def _create_view_edit(context, data_dict):
     offset=offset,
     limit=limit
     )
+    print 'sql_string'
+    print sql_string
+    #raise ValidationError(sql_string)
     #sql_string = sql_string.replace('%', '%%')
     #sql_string = sql_string.format(where=where_clause), [where_values]
     #print sql_string
     #asd
-    return sql_string
+    return sql_string.encode('utf-8')
     
 def _get_fields(fields, data_dict):
     #orig_field_ids = data_dict.get('fields', [])
@@ -570,7 +639,7 @@ def _get_fields(fields, data_dict):
         if tf in translation_columns:
             field_ids.append(u'"{0}"."{1}" AS "{2}"'.format(table, tf, translation_columns.get(tf)))
         else:
-            field_ids.append(u'"{0}"."{1}"'.format(table, tf))
+            field_ids.append(u'"{0}"."{1}" AS "{2}"'.format(table, tf, tf))
     print 'final fields'
     print field_ids
     return field_ids
@@ -591,12 +660,13 @@ def _get_fields_edit(fields, data_dict):
     #            )
     #else:
     #    all_field_ids = orig_field_ids
-
     all_field_ids = _get_list(fields)
+
     print 'orig field ids'
     print all_field_ids
     print 'trans field ids'
     print trans_field_ids
+
     translation_columns = data_dict.get('translation_columns')
     translation_columns_status = data_dict.get('translation_columns_status')
     print 'trans columns'
@@ -609,8 +679,9 @@ def _get_fields_edit(fields, data_dict):
             table = orig_table
         # if column translation available rename field using alias
         field_ids.append(u'"{0}"."{1}"'.format(orig_table, tf))
-        if not translation_columns_status.get(tf) == 'no-translate':
+        if not translation_columns_status.get(tf) == 'no-translate' and not translation_columns_status.get(tf) == '':
             field_ids.append(u'"{0}"."{1}" AS "{2}"'.format(table, tf, tf+'-'+data_dict.get('language')))
+
     print 'final fields'
     print field_ids
     return field_ids
@@ -649,6 +720,63 @@ def _get_list(input, strip=True):
     else:
         return l
 
+
+def _where(field_ids, data_dict):
+    '''Return a SQL WHERE clause from data_dict filters and q'''
+    filters = data_dict.get('filters', {})
+
+    if not isinstance(filters, dict):
+        raise ValidationError({
+            'filters': ['Not a json object']}
+        )
+
+    where_clauses = []
+    values = []
+   
+    #orig_fields = data_dict.get('original_fields', [])
+    trans_fields = data_dict.get('translation_fields', [])
+    #field_ids = orig_fields + trans_fields
+    orig_resource = data_dict.get('resource_id')
+    trans_resource = data_dict.get('translation_resource_id')
+    trans_columns = data_dict.get('translation_columns',[])
+
+    trans_field_ids = []
+    for k, v in trans_columns.iteritems():
+        if v:
+            trans_field_ids.append(v)
+    #raise ValidationError(field_ids)
+    
+    for field, value in filters.iteritems():
+        if field not in field_ids and field not in trans_field_ids:
+            raise ValidationError({
+                'filters': [u'field "{0}" not in table'.format(field)]}
+            )
+        if field in trans_field_ids:
+            res_id = trans_resource
+            for f,v in trans_columns.iteritems():
+                if v == field:
+                    orig_field = f
+                    break
+        else:
+            res_id = orig_resource
+            orig_field = field
+        where_clauses.append(u'"{0}"."{1}" = \'{2}\''.format(res_id, orig_field, value))
+        values.append(value)
+
+    
+    # add full-text search where clause
+    if data_dict.get('q'):
+        #where_clauses.append(u'_full_text @@ query')
+        where_clauses.append(u'("{0}"._full_text @@ query OR "{1}"._full_text @@ query)'.format(orig_resource, trans_resource))
+        #where_clauses.append(u'"{0}"._full_text @@ query'.format(trans_resource))
+
+    where_clause = u' AND '.join(where_clauses)
+    if where_clause:
+        where_clause = u'WHERE ' + where_clause
+    #return where_clause, values
+    return where_clause
+
+"""
 def _where(field_ids, data_dict):
     '''Return a SQL WHERE clause from data_dict filters and q'''
     filters = data_dict.get('filters', {})
@@ -679,6 +807,8 @@ def _where(field_ids, data_dict):
         #where_clauses.append(u'"{0}" = {1}'.format(field, val))
         values.append(value)
 
+    if not where_clauses:
+        return u''
     # add full-text search where clause
     if data_dict.get('q'):
         where_clauses.append(u'_full_text @@ query')
@@ -697,19 +827,24 @@ def _where(field_ids, data_dict):
     #    where = u''
     #print where_clause
     return where_clause
-
+"""
 
 def _textsearch_query(data_dict):
     q = data_dict.get('q')
     lang = data_dict.get(u'language', u'english')
     lang = u'english'
     if q:
+        
+        orig_resource = data_dict.get('resource_id')
+        trans_resource = data_dict.get('translation_resource_id')
+
         if data_dict.get('plain', True):
             statement = u", plainto_tsquery('{lang}', '{query}') query"
         else:
             statement = u", to_tsquery('{lang}', '{query}') query"
 
-        rank_column = u', ts_rank(_full_text, query, 32) AS rank'
+        rank_column = u', ts_rank(("{0}"._full_text || "{1}"._full_text), query, 32) AS rank'.format(orig_resource, trans_resource)
+        
         print statement.format(lang=lang, query=q), rank_column
         return statement.format(lang=lang, query=q), rank_column
     return '', ''
@@ -769,67 +904,6 @@ def _strip(input):
 
 ### Copy from datastore end
 
-def _translate_automatic(context, res, col_name, original_ds, new_ds):
-    total = original_ds.get('total')
-    res_id = original_ds.get('resource_id')
-    columns = json.loads(res.get('translation_columns_status','{}'))
-    for k,v in columns.iteritems():
-        if k == col_name:
-            columns.update({k:'automatic'})
-
-    columns = json.dumps(columns)
-    res.update({
-            'translation_columns_status' : columns
-            })
-    res = p.toolkit.get_action('resource_update')(context, res)
-
-    vocs = closed_vocabularies.get_names()
-
-    offset = 0
-    iters = total/PAGE_STEP
-    if not (total % PAGE_STEP == 0):
-        iters += 1
-    print iters
-    for k in range(1,iters+1):
-        print 'offset'
-        print k
-
-        recs = p.toolkit.get_action('datastore_search')(context, {'resource_id':res_id, 'offset': offset, 'limit': PAGE_STEP, 'sort':'_id'}).get('records')
-        nrecs = []
-        for rec in recs:
-            key = col_name
-            value = rec.get(key)
-
-            nvalue = ''
-            found = False
-            # look for term in all available vocabularies
-            for voc_name in vocs:
-                voc = closed_vocabularies.get_by_name(voc_name)
-                voc = voc.get('vocabulary')
-                for term in voc:
-                    term_key = term.value
-                    term_value = term.title
-                    if term_key == value:
-                        nvalue = term_value
-                        found = True
-                        break
-                if found:
-                    break
-
-            rec.update({key:nvalue})
-            nrec = {'_id':rec.get('_id'),key:nvalue}
-            nrecs.append(nrec)
-
-        ds = p.toolkit.get_action('datastore_upsert')(context,
-                {
-                    'resource_id': new_ds.get('resource_id'),
-                    'allow_update_with_id':True,
-                    'force': True,
-                    'records': nrecs
-                    })
-        offset=offset+PAGE_STEP
-    return new_ds
-
 def _update_title(context, res, col_name, title_translation):
     columns = json.loads(res.get('translation_columns','{}'))
 
@@ -844,6 +918,71 @@ def _update_title(context, res, col_name, title_translation):
     res = p.toolkit.get_action('resource_update')(context, res)
     return res
 
+def _translate_automatic(context, res, col_name, original_ds, new_ds, language):
+    total = original_ds.get('total')
+    res_id = original_ds.get('resource_id')
+    columns = json.loads(res.get('translation_columns_status','{}'))
+    for k,v in columns.iteritems():
+        if k == col_name:
+            columns.update({k:'automatic'})
+
+    columns = json.dumps(columns)
+    res.update({
+            'translation_columns_status' : columns
+            })
+    print 'before upd'
+        
+    res = p.toolkit.get_action('resource_update')(context, res)
+    print 'after aupd'
+    #es = gettext.translation('guess', localedir='locale', languages=['es'])
+
+    offset = 0
+    iters = total/PAGE_STEP
+    if not (total % PAGE_STEP == 0):
+        iters += 1
+    print iters
+    i18n.set_lang(language)
+    for k in range(1,iters+1):
+        print 'offset'
+        print k
+
+        recs = p.toolkit.get_action('datastore_search')(context, {'resource_id':res_id, 'offset': offset, 'limit': PAGE_STEP, 'sort':'_id'}).get('records')
+        nrecs = []
+        for rec in recs:
+            key = col_name
+            value = rec.get(key)
+
+            nvalue = _(value)
+            found = False
+            '''
+            # look for term in all available vocabularies
+            for voc_name in vocs:
+                voc = closed_vocabularies.get_by_name(voc_name)
+                voc = voc.get('vocabulary')
+                for term in voc:
+                    term_key = term.value
+                    term_value = term.title
+                    if term_key == value:
+                        nvalue = term_value
+                        found = True
+                        break
+                if found:
+                    break
+            '''
+            rec.update({key:nvalue})
+            nrec = {'_id':rec.get('_id'),key:nvalue}
+            nrecs.append(nrec)
+
+        ds = p.toolkit.get_action('datastore_upsert')(context,
+                {
+                    'resource_id': new_ds.get('resource_id'),
+                    'allow_update_with_id':True,
+                    'force': True,
+                    'records': nrecs
+                    })
+        offset=offset+PAGE_STEP
+    return new_ds
+
 def _translate_manual(context, res, col_name, original_ds, new_ds):
     # Just update total number of values with None in case overriding
     total = original_ds.get('total')
@@ -853,6 +992,8 @@ def _translate_manual(context, res, col_name, original_ds, new_ds):
             columns.update({k:'manual'})
 
     columns = json.dumps(columns)
+    #res = p.toolkit.get_action('resource_show')(context, {'id':res.get('id')})
+    pprint.pprint(res)
     res.update({
             'translation_columns_status' : columns
             })
@@ -865,7 +1006,6 @@ def _translate_manual(context, res, col_name, original_ds, new_ds):
                 'allow_update_with_id':True,
                 'records': [{'_id':i, col_name:''} for i in range(1,total+1)]
             })
-
 
 def _transcript(context, res, col_name, original_ds, new_ds):
     # TODO: Need to json serialize context and data_dict
@@ -881,6 +1021,7 @@ def _transcript(context, res, col_name, original_ds, new_ds):
             })
     res = p.toolkit.get_action('resource_update')(context, res)
     
+    registry.register(GreekLanguagePack)
     offset = 0
     iters = total/PAGE_STEP
     if not (total % PAGE_STEP == 0):
@@ -895,7 +1036,9 @@ def _transcript(context, res, col_name, original_ds, new_ds):
         for rec in recs:
             key = col_name
             value = rec.get(key)
-            nvalue = unidecode(value)
+
+            nvalue = _transcript_string(value)
+
             rec.update({key:nvalue})
             #print 'KEY:VALUE'
             #print key+':'+nvalue
@@ -913,6 +1056,9 @@ def _transcript(context, res, col_name, original_ds, new_ds):
                     })
         offset=offset+PAGE_STEP
     return new_ds
+
+def _transcript_string(value):
+    return translit(value, 'el_EL', reversed=True)
 
 def _delete_column(context, col_name, ds, total):
     # And update with correct number of records

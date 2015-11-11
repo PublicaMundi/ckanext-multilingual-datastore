@@ -33,10 +33,11 @@ class UserController(BaseController):
             'user': c.user or c.author,
             'auth_user_obj': c.userobj
         }
-
+        print 'RESOURCE DATPREV'
         try:
-            c.resource = toolkit.get_action('resource_show')(context,
-                                                     {'id': resource_id})
+            resource = toolkit.get_action('resource_show')(context,{'id': resource_id})
+            resource.update({'resource_package_id':id})
+            c.resource = resource
             c.package = toolkit.get_action('package_show')(context, {'id': id})
             c.resource_language = language
 
@@ -72,8 +73,6 @@ class UserController(BaseController):
         context = self._get_context()
         try:
             pkg_dict = toolkit.get_action('resource_show')(context, {'id':resource_id})
-            print 'RESOURCE='
-            print pkg_dict
             return pkg_dict
         except NotFound:
             abort(404, _('Resource not found'))
@@ -82,17 +81,12 @@ class UserController(BaseController):
 
     def _check_trans_res_status(self, res, language):
         context = self._get_context()
-        print 'before trans get'
         trans_res = self._get_translation_resource(res, language)
-        print 'TRAN RES'
-        print trans_res
         if not trans_res:
             return
         if trans_res.get('translation_status') == 'published':
             data = {'resource_id':res.get('id'), 'language':language }
-            print 'attempting unpublish'
             return toolkit.get_action('translate_resource_unpublish')(context, data)
-            print 'unpublished'
         #trans_res = self._get_translation_resource(resource_id, language)
         #print 'TRAN RES after'
         #print trans_res
@@ -122,4 +116,3 @@ class UserController(BaseController):
         c.package = pkg_dict
         c.resource = resource
         c.resource_language = language
-

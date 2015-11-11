@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-
+import pylons.config as config
 import nose.tools
 import json
 #import collections
@@ -13,19 +13,24 @@ import ckan.new_tests.helpers as helpers
 import ckan.model as model
 import ckan.logic as logic
 import ckan.plugins as p
-class TestController(ckan.tests.TestController):
 
-    user = None
+PAGE_STEP = int(config.get('ckanext.multilingual.resources.page_step', 100))
+
+class TestController(ckan.tests.TestController):
 
     def __init__(self):
         self.user = factories.User()
+        self.organization = factories.Organization(user=self.user)
 
     def get_context(self):
+        print self.user
         return {
                 'model':model,
                 'session':model.Session,
                 'user':self.user['name'],
-                'ignore_auth':True,
+                #'auth_user_obj': c.userobj,
+                #'organization': self.organization['name'],
+                'ignore_auth': True,
                 'api_version':3,
                 }
 
@@ -35,9 +40,8 @@ class TestController(ckan.tests.TestController):
 
     # If initialize_datastore or get_initial_datastore fail, all tests will fail
     @nose.tools.istest
-    def test_1_initialize_dataset_and_resource(self):
+    def test_a1_initialize_dataset_and_resource(self):
         self._initialize_datastore()
-        #resource_nodatastore = self._get_initial_datastore(package_data_no_datastore.get('name'))
 
     @nose.tools.istest
     def test_a2_create_translation_resource_noauth(self):
@@ -46,7 +50,6 @@ class TestController(ckan.tests.TestController):
         context.update({'ignore_auth':False})
 
         nose.tools.assert_raises(logic.NotAuthorized, helpers.call_action, 'translate_resource_create', context=context)
-
 
     @nose.tools.istest
     def test_a3_create_translation_resource_invalid(self):
@@ -58,14 +61,14 @@ class TestController(ckan.tests.TestController):
                     'package_id': package_data.get('name'),
                     'resource_id': resource.get('id'),
                     },
+                    #{
+                    #'package_id': package_data.get('name'),
+                    #'resource_id': resource.get('id'),
+                    #'language': 1,
+                    #},
                     {
                     'package_id': package_data.get('name'),
-                    'resource_id': resource.get('id'),
-                    'language': 'gr',
-                    },
-                    {
-                    'package_id': package_data.get('name'),
-                    'language': 'gr',
+                    'language': 'gre',
                     },
                     {
                     'package_id': package_data.get('name'),
@@ -86,10 +89,6 @@ class TestController(ckan.tests.TestController):
         for d in incomplete_or_wrong_trans_data:
             nose.tools.assert_raises(p.toolkit.ValidationError,
                                     helpers.call_action, 'translate_resource_create', context = context, **d)
-
-        #resource_nodatastore = self._get_initial_datastore(package_data_no_datastore.get('name'))
-        #pprint.pprint(resource_nodatastore)
-        # Should raise not found error on all
 
     @nose.tools.istest
     def test_a4_create_translation_resource(self):
@@ -119,13 +118,12 @@ class TestController(ckan.tests.TestController):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
-        # Should create translation resource correctly
+        # Should raise validation error since translation resource already exists
         trans_data = {
                 'package_id': package_data.get('name'),
                 'resource_id': resource.get('id'),
                 'language': 'el',
                 }
-
         nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_create', context=context, **trans_data)
 
     ###
@@ -137,28 +135,41 @@ class TestController(ckan.tests.TestController):
         resource = self._get_initial_datastore(package_data.get('name'))
         res_el = helpers.call_action('resource_show', context=context, id=json.loads(resource.get('has_translations')).get('el'))
 
-        # Should create translation resource correctly
+        # Should raise validation error on all
         trans_data = [
                 {
+                # wrong resource id
                 'resource_id': 'wrong-resource-id',
+                'language': 'el',
                 'mode':'manual',
                 'column_name': 'address',
                 },
                 {
-                # parent resource id
                 'resource_id': resource.get('id'),
+                # wrong lang code
+                'language': 'gr',
+                'mode':'manual',
+                'column_name': 'wrong-column-name',
+                },
+                {
+                # translation resource id (instead of parent)
+                'resource_id': res_el.get('id'),
+                'language': 'el',
                 'mode':'manual',
                 'column_name': 'address',
                 },
-
                 {
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
+                # wrong translation mode
                 'mode':'no-such-mode',
                 'column_name': 'address',
                 },
                 {
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'manual',
+                # wrong column name
                 'column_name': 'wrong-column-name',
                 }]
 
@@ -179,12 +190,14 @@ class TestController(ckan.tests.TestController):
 
         # Update same column twice to make sure no conflicts arise
         trans_data = [{
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'manual',
                 'column_name':'address',
                 },
                 {
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'manual',
                 'column_name':'address',
                 }]
@@ -195,7 +208,7 @@ class TestController(ckan.tests.TestController):
             assert updated_ds.get('resource_id') == res_el.get('id')
             assert updated_ds.get('total') == 3
 
-    @nose.tools.nottest
+    @nose.tools.istest
     def test_b3_update_translation_resource_transcription(self):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
@@ -207,17 +220,20 @@ class TestController(ckan.tests.TestController):
         assert res_el.get('translation_parent_id') == res.get('id')
 
         trans_data = [{
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'transcription',
                 'column_name':'name',
                 },
                 {
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'manual',
                 'column_name':'name',
                 },
                 {
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'transcription',
                 'column_name':'address',
                 }]
@@ -239,7 +255,10 @@ class TestController(ckan.tests.TestController):
         res = helpers.call_action('datastore_search', context=context, id=res_el.get('id'))
         for rec in res.get('records'):
             print rec
-            assert rec.get('name') == None
+            # manual translation so should be empty
+            assert rec.get('name') == u''
+            # transcription so should not be empty
+            assert not rec.get('address') == u''
         pprint.pprint(res)
         assert rec.get('address')
 
@@ -268,13 +287,13 @@ class TestController(ckan.tests.TestController):
             })
 
         ds = helpers.call_action('datastore_search', context=context, id=res.get('id'))
-        print 'added?'
         #pprint.pprint(ds)
         assert ds.get('resource_id') == res.get('id')
         assert ds.get('total') == 5000
 
         trans_data = [{
-                'resource_id': res_el.get('id'),
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'mode':'transcription',
                 'column_name':'name',
                 },
@@ -304,16 +323,16 @@ class TestController(ckan.tests.TestController):
                     break
             assert field_exists
         res_first = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=0)
-        assert len(res_first.get('records')) == 100
+        assert len(res_first.get('records')) == PAGE_STEP
         assert res_first.get('records')[3].get('name') == 'lalala'
         pprint.pprint(res_first)
 
-        res_last = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=4900)
-        assert len(res_last.get('records')) == 100
-        assert res_first.get('records')[99].get('name') == 'lalala'
+        res_last = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=50*PAGE_STEP-100, limit=PAGE_STEP)
+        assert len(res_last.get('records')) == PAGE_STEP
+        assert res_first.get('records')[PAGE_STEP-1].get('name') == 'lalala'
         pprint.pprint(res_last)
 
-        res_none = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=5000)
+        res_none = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=50*PAGE_STEP, limit=PAGE_STEP)
         pprint.pprint(res_none)
         assert len(res_none.get('records')) == 0
 
@@ -322,61 +341,84 @@ class TestController(ckan.tests.TestController):
     ###
     ### Translate Resource Delete Tests
     ###
+
     @nose.tools.istest
-    def test_c1_delete_translation_resource_invalid(self):
+    def test_c1_delete_translation_resource_column_invalid(self):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
-        # Should delete translation resource correctly
-        trans_data_wrong = [
-                {'resource_id': resource.get('id')},
-                {'resource_id': 'wrong-resource-id'}]
+        #resource_es_id = json.loads(resource.get('has_translations')).get('es')
+        # Should raise validation error on all
+        trans_data = [{
+                'resource_id': resource.get('id'),
+                'language': 'es',
+                # wrong column name
+                'column_name': 'invalid-column-name'
+                },
+                {
+                'resource_id': resource.get('id'),
+                # non existing language
+                'language': 'de',
+                'column_name': 'name'
+                }]
 
-        for d in trans_data_wrong:
+        for d in trans_data:
             nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_delete', context=context, **d)
 
     @nose.tools.istest
-    def test_c2_delete_translation_resource_column_invalid(self):
-        resource = self._get_initial_datastore(package_data.get('name'))
-        context = self.get_context()
-
-        resource_es_id = json.loads(resource.get('has_translations')).get('es')
-        # Should delete translation resource correctly
-        trans_data = {
-                'resource_id': resource_es_id,
-                'column_name': 'invalid-column-name'
-                }
-
-        nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_delete', context=context, **trans_data)
-
-    # TODO: Create this after translate_resource_update has created some columns
-    @nose.tools.istest
-    def test_c3_delete_translation_resource_column(self):
+    def test_c2_delete_translation_resource_column(self):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
         resource_el_id = json.loads(resource.get('has_translations')).get('el')
-        resource_el = p.toolkit.get_action('datastore_search')(context, {'id':resource_el_id})
-        #print resource_el
+        #resource_el = p.toolkit.get_action('datastore_search')(context, {'id':resource_el_id})
         # Should delete translation resource correctly
         trans_data = {
-                'resource_id': resource_el_id,
+                'resource_id': resource.get('id'),
+                'language': 'el',
                 'column_name': 'name'
                 }
         pprint.pprint(helpers.call_action('translate_resource_delete', context=context, **trans_data))
+        res_el = helpers.call_action('datastore_search', context=context, resource_id=resource_el_id)
         print "RESULT"
-        pprint.pprint(helpers.call_action('datastore_search', context=context, resource_id=resource_el_id))
-        asd
-        #nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_delete', context=context, **trans_data)
+        pprint.pprint(res_el)
+        for fld in res_el.get('fields'):
+            # assert deleted column does not exist in resource
+            assert not fld.get('id') == 'name'
 
-    @nose.tools.nottest
+    @nose.tools.istest
+    def test_c3_delete_translation_resource_invalid(self):
+        resource = self._get_initial_datastore(package_data.get('name'))
+        context = self.get_context()
+
+        # Should raise validation error on all
+        trans_data_wrong = [
+                    {
+                    'resource_id': resource.get('id'),
+                    # non existing language
+                    'language': 'de'
+                    },
+                    {
+                    # non existing resource id
+                    'resource_id': 'wrong-resource-id',
+                    'language': 'el'
+                    }]
+
+        for d in trans_data_wrong:
+            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_delete', context=context, **d)
+
+
+    @nose.tools.istest
     def test_c4_delete_translation_resource(self):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
         resource_es_id = json.loads(resource.get('has_translations')).get('es')
         # Should delete translation resource correctly
-        trans_data = {'resource_id': resource_es_id}
+        trans_data = {
+                'resource_id': resource.get('id'),
+                'language': 'es'
+                }
 
         helpers.call_action('translate_resource_delete', context=context, **trans_data)
         res = helpers.call_action('resource_show', context=context, id=resource_es_id)
@@ -384,16 +426,21 @@ class TestController(ckan.tests.TestController):
         assert res.get('state') == 'deleted'
         orig_resource = helpers.call_action('resource_show', context=context, id=resource.get('id'))
         assert 'es' not in json.loads(orig_resource.get('has_translations'))
+        #res_ds = helpers.call_action('datastore_search', context=context, resource_id=resource_es_id)
+        nose.tools.assert_raises(p.toolkit.ObjectNotFound, helpers.call_action, 'datastore_search', context=context, resource_id=resource_es_id)
 
     # TODO: Move test after basic delete tests
-    @nose.tools.nottest
+    @nose.tools.istest
     def test_c5_delete_and_recreate_translation_resource(self):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
         resource_el_id = json.loads(resource.get('has_translations')).get('el')
         # Should delete translation resource correctly
-        trans_data = {'resource_id': resource_el_id }
+        trans_data = {
+                'resource_id': resource.get('id'),
+                'language': 'el'
+                }
 
         helpers.call_action('translate_resource_delete', context=context, **trans_data)
         # TODO: assert oringal metadata updates - has_translations and translation resource_deleted
@@ -426,10 +473,9 @@ class TestController(ckan.tests.TestController):
         assert json.loads(original_resource.get('has_translations')).get('el') == created_res.get('id')
 
     # Helpers
+    
     def _get_initial_datastore(self, name):
         context = self.get_context()
-        print 'name'
-        print name
         res = helpers.call_action('package_show', context=context, id=name)
         # Assert resource exists and return it
         assert res.get('id')
@@ -441,13 +487,17 @@ class TestController(ckan.tests.TestController):
         # Step 1 - create package
         package = helpers.call_action('package_create', context=context, **package_data_no_datastore)
         created_package = helpers.call_action('package_show', context=context, id=package_data_no_datastore.get('name'))
-        print 'package_no_datastore'
+
         assert created_package
         assert created_package.get('id') == package.get('id')
         assert created_package.get('resources')
         assert created_package.get('resources')[0].get('id')
 
+        #package_data.update({'owner_org' : self.organization['id']})
+        print package_data
+        print context
         package = helpers.call_action('package_create', context=context, **package_data)
+        print package
         assert helpers.call_action('package_show', context=context, id=package.get('id')).get('id')
         # Step 2 - create the resource and table and fill it with sample data
         datastore = helpers.call_action('datastore_create', context=context, **datastore_data)
@@ -455,7 +505,6 @@ class TestController(ckan.tests.TestController):
         #package = helpers.call_action('package_update', context=context, id=package['id'], name='changed')
         # Assert package created correctly
         created_package = helpers.call_action('package_show', context=context, id=package.get('id'))
-        print 'package'
         # Assert resource created
         assert helpers.call_action('resource_show', context=context, id=datastore.get('resource_id')).get('id')
         assert created_package.get('resources')

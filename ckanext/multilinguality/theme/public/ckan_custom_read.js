@@ -41,6 +41,7 @@ if (isNodeModule) {
     console.log('FETCHING'); 
     var actualQuery = my._normalizeQuery(queryObj);
     actualQuery.language = queryObj.translation_language;
+    console.log(actualQuery);
     var self = this;
     this.action('translate_resource_search', actualQuery, function(err, results) {
       if (err) {

@@ -1,7 +1,8 @@
 {% extends "dataviewer/base.html" %}
+{% set language = h.lang() %}
 
 {% block page %}
-<div data-module="recline_translate_read_preview" data-module-site_url="{{ h.dump_json(h.url('/', locale='default', qualified=true)) }}">
+<div data-module="recline_translate_read_preview" data-module-site_url="{{ h.dump_json(h.url('/', locale='default', qualified=true)) }}", data-module-language = "{{language}}">
       
           <h4 class="loading-dialog">
       <div class="loading-spinner"></div>

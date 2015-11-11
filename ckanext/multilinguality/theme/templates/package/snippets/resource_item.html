@@ -1,5 +1,10 @@
 {% ckan_extends %}
 
 {% block resource_languages %}
+{# not available here 
+{% if res.datastore_active %}
+#}
+{% if res.format == 'csv' %}
 {% snippet 'package/snippets/resource_languages.html', pkg=pkg, res=res %}
+{% endif %}
 {% endblock %}

@@ -228,7 +228,8 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                     dataset.save();
                     //self.sandbox.notify('hello', 'success');
                 });
-
+                console.log('resdat');
+                console.log(resourceData);
                 self.publish_btn.click(function() {
                     //TODO: Save before publishing - something doesnt work
                         //function(dataset){
@@ -236,7 +237,11 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                     //translate.publish(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))})
                         dataset.save();
                         //window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'));
-                        self.publishWithConfirmation(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))}); 
+                        self.publishWithConfirmation(self._onLoad, function() { 
+                            //window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))
+                           //TODO: find better way to do this
+                            window.top.location.href = resourceData.endpoint.substring(0, resourceData.endpoint.indexOf('/api')) + '/dataset/' + resourceData.resource_package_id;
+                        }); 
                     //})
                     //});
 
@@ -327,7 +332,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
 
             }
             else{
-
+                translate.delete(options, this._onLoad, this._onComplete);
             }        
     },
     publishWithConfirmation: function(ld, cb) {

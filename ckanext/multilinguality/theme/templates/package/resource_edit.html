@@ -10,7 +10,9 @@
 
 {% resource 'ckanext-multilinguality/check_status.js' %}
 {% endblock %}
-  {% if h.check_access('package_update', {'id':pkg.id }) and not translation_resource %}
+
+ {% if res.datastore_active %}
+    {% if h.check_access('package_update', {'id':pkg.id }) and not translation_resource %}
   <div class="dropdown btn-group">
     <a href="#" class="btn btn-primary dropdown-toggle"  data-toggle="dropdown">
       <i class="icon-flag-alt"></i>
@@ -29,6 +31,7 @@
       {% endblock %}
     </ul>
   </div>
+  {% endif %}
   {% endif %}
   {% endblock %}
 

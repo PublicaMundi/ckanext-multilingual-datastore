@@ -4702,6 +4702,14 @@ my.SlickGrid = Backbone.View.extend({
       v[field] = args.item[field];
       model.set(v);
     });
+
+    this.grid.setSelectionModel(new Slick.CellSelectionModel());
+    //this.grid.registerPlugin(new Slick.AutoTooltips());
+
+    // set keyboard focus on the grid
+    //grid.getCanvasNode().focus();
+
+    this.grid.registerPlugin(new Slick.CellExternalCopyManager());
     var columnpicker = new Slick.Controls.TColumnPicker(this.model, columns, this.grid);
                                                        
             //_.extend(options,{state:this.state}));
