@@ -5,7 +5,7 @@
 {# not available here 
 {% if res.datastore_active %}
 #}
-{% if res.format == 'csv' %}
+{% if res.format == 'csv' or res.format == 'xls' %}
 {% snippet 'package/snippets/resource_languages.html', pkg=pkg, res=res %}
 {% endif %}
 {% endblock %}

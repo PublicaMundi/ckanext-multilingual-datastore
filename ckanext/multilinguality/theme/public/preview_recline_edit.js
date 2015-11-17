@@ -124,7 +124,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
             
         }
 
-        var orig_lang = resourceData.resource_language || 'en';
+        var orig_lang = resourceData.resource_language || 'el';
 
         if (orig_lang == lang){
           alert(self.i18n('same_as_original'));
@@ -207,18 +207,22 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                 });
     
                 dataset.bind('translate-title', function(col){
-                    var options = {column:col.id, mode:'title'};
-                    console.log('before update w conf');
+                    console.log(col);
+                    var options = {column:col.id, translation: col.translation, mode:'title'};
                     self.updateWithConfirmation(dataset, options); 
                 });
 
                 dataset.queryState.bind('save', function(){
+
+                    //translate.update(options, this._onLoad, this._onComplete);
+                    //dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: true});
+                    //setTimeout(function(){ dataExplorer.model.fetch()}, 3000);
                     //console.log('dataset being saved...');
                     //self.sandbox.notify('hello', 'success');
                     //self.sandbox.client.favoriteDataset(this.button.val()).done(self._onSuccess);
                     //self._onComplete();
                     
-                    dataset.save();
+                    //dataset.save();
                     //.done(function(){
                     //});
                 });
@@ -226,6 +230,8 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                 self.save_btn.click(function() {
                     //console.log('dataset being saved...');
                     dataset.save();
+                    dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: false});
+                    //setTimeout(function(){ dataExplorer.model.fetch()}, 3000);
                     //self.sandbox.notify('hello', 'success');
                 });
                 console.log('resdat');
@@ -235,6 +241,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                         //function(dataset){
                      //   alert('done saving');
                     //translate.publish(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))})
+                        //dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: false});
                         dataset.save();
                         //window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'));
                         self.publishWithConfirmation(self._onLoad, function() { 
@@ -360,7 +367,15 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                     this.options.cb = cb;
 
                     this.confirmTitle(options.column);
-                 
+                    console.log(dataset);
+                   console.log(options); 
+                   if (options.translation){
+                        $('.inputTitleTrans').val(options.translation);
+                   }
+                   else{
+                        $('.inputTitleTrans').val('');
+                   }
+
                     $('.inputTitleTrans').on('input', function(e){
                         options.title_trans = e.target.value;
                     });

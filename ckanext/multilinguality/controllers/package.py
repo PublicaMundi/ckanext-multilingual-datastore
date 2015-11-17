@@ -15,9 +15,21 @@ class UserController(BaseController):
         res = self._check_res_access(resource_id)
         self._check_trans_res_status(res, language)
 
-        self._setup_template_variables(pkg_dict, res, language)
+        self._setup_template_variables(pkg_dict, res, language=language)
 
         return render('package/resource_translate.html')
+
+    def translation_resources_delete(self, resource_id, id):
+        #self._change_trans_res_status(resource_id, language)
+        pkg_dict = self._check_pkg_access(id)
+        res = self._check_res_access(resource_id)
+        #self._check_trans_res_status(res, language)
+        self._delete_all_resources(resource_id)
+
+        self._setup_template_variables(pkg_dict, res)
+
+        redirect(toolkit.url_for(controller='package', action='read', id=id))
+        #return render('package/read.html')
 
     def resource_datapreview(self, resource_id, id, language):
         '''
@@ -79,6 +91,17 @@ class UserController(BaseController):
         except NotAuthorized:
             abort(401, _('Not authorized to see this page'))
 
+    def _delete_all_resources(self, resource_id):
+        context = self._get_context()
+        try:
+            res = toolkit.get_action('translate_resource_delete_all')(context, {'resource_id':resource_id})
+            return res
+        except NotFound:
+            abort(404, _('Resource not found'))
+        except NotAuthorized:
+            abort(401, _('Not authorized to see this page'))
+
+
     def _check_trans_res_status(self, res, language):
         context = self._get_context()
         trans_res = self._get_translation_resource(res, language)
@@ -107,7 +130,7 @@ class UserController(BaseController):
         }
         return context
 
-    def _setup_template_variables(self, pkg_dict, resource, language):
+    def _setup_template_variables(self, pkg_dict, resource, language=None):
         #c.is_sysadmin = False # Fixme: why? normally should be computed
         #c.user_dict = user_dict
         #c.is_myself = user_dict['name'] == c.user
@@ -115,4 +138,5 @@ class UserController(BaseController):
         #c.pkg_dict = pkg_dict
         c.package = pkg_dict
         c.resource = resource
-        c.resource_language = language
+        if language:
+            c.resource_language = language

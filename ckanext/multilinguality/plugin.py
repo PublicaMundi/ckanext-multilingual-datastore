@@ -76,6 +76,12 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 action = 'resource_translate')
 
         mapper.connect(
+                'translation_resources_delete',
+                '/dataset/{id}/translation_resources_delete/{resource_id}/',
+                controller='ckanext.multilinguality.controllers.package:UserController',
+                action = 'translation_resources_delete')
+
+        mapper.connect(
                 '/dataset/{id}/resource_translate_inner/{resource_id}/{language}',
                 controller='ckanext.multilinguality.controllers.package:UserController',
                 action = 'resource_datapreview')
@@ -89,6 +95,39 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def after_update(self, context, data_dict):
         # TODO: wrong data_dict output
         # doesnt contain resources
+        return data_dict
+        resources = data_dict.get('resources')
+        if not resources:
+            return data_dict
+        else:
+            nres_list = []
+            for res in data_dict.get('resources'):
+                if res.get('translation_resource'):
+                    found = False
+                    for pres in data_dict.get('resources'):
+                        if pres.get('id') == res.get('translation_parent_id'):
+                            found = True
+                            break
+                    if not found:
+                        pass
+                        #nres_list.append(res)
+                        #p.toolkit.get_action('translate_resource_delete')(context, {'id':res.get('id'), 'lang':})
+                    else:
+                        nres_list.append(res)
+                else:
+                    nres_list.append(res)
+            data_dict.update({'resources':nres_list})
+            print data_dict.get('resources')
+            print len(data_dict.get('resources'))
+            #data_dict.update({'resources': nres_list})
+            #print data_dict.get('resources')
+            #asd
+            return data_dict
+
+        print len(data_dict.get('resources'))
+        print data_dict.get('resources')
+        print 'UPDATED!!!!!!'
+        asd
         return data_dict
         new_res_list = []
         for res in data_dict.get('resources'):
@@ -145,8 +184,10 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     def after_show(self, context, data_dict):
         return data_dict
         #print context
-         
-        user_orgs = p.toolkit.get_action('organization_list_for_user')(context, {'id':context.get('user')})
+        if 'user' in context: 
+            user_orgs = p.toolkit.get_action('organization_list_for_user')(context, {'id':context.get('user')})
+        else:
+            user_orgs = [{}]
         org_user = False
         if data_dict.get('owner_org') in [u.get('id') for u in user_orgs]:
             org_user = True
@@ -160,7 +201,8 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 for res in v:
                     if ('translation_resource' in res):
                         if org_user:
-                            #and not res.get('translation_status') == 'published':
+                    #    pass
+                        #and not res.get('translation_status') == 'published':
                             new_res.append(res)
                     else:
                         new_res.append(res)
@@ -207,6 +249,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 'translate_resource_update': action.translate_resource_update,
                 'translate_resource_search': action.translate_resource_search,
                 'translate_resource_delete': action.translate_resource_delete,
+                'translate_resource_delete_all': action.translate_resource_delete_all,
                 'translate_resource_publish': action.translate_resource_publish,
                 'translate_resource_unpublish': action.translate_resource_unpublish,
                 }
@@ -253,7 +296,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         #        print 'found!'
         #        print lang_code[:-1]
                 #return lang_code
-        return 'en'
+        return 'el'
 
     def get_orig_language(self, res):
         available_locales = i18n.get_available_locales()

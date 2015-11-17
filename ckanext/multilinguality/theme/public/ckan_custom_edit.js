@@ -100,6 +100,7 @@ if (isNodeModule) {
         }
         else{
             field.label = field.id;
+            field.translation = field.label in translation_columns ? translation_columns[field.label] : null;
         }
 
         

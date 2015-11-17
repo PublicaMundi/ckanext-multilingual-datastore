@@ -4573,6 +4573,7 @@ my.SlickGrid = Backbone.View.extend({
         width: 80,
         //cssClass: cssClass,
         headerCssClass: cssClass,
+        translation: field.translation,
         //state: field.state,
         defaultSortAsc: true,
         editor: editor 

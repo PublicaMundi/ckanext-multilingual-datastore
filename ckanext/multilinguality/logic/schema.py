@@ -122,6 +122,16 @@ def translate_resource_delete_schema():
     }
     return schema
 
+def translate_resource_delete_all_schema():
+    schema = {
+        'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
+        'force': [ignore_missing, boolean_validator],
+        '__junk': [empty],
+        '__before': [rename('id', 'resource_id')]
+    }
+    return schema
+
+
 def translate_resource_publish_schema():
     schema = {
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],

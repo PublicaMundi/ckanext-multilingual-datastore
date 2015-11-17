@@ -99,7 +99,7 @@ class TestController(ckan.tests.TestController):
         trans_data = [{
                 'package_id': package_data.get('name'),
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 },
                 {
                 'package_id': package_data.get('name'),
@@ -111,7 +111,7 @@ class TestController(ckan.tests.TestController):
             assert created_res.get('id')
             assert created_res.get('translation_resource')
             assert created_res.get('translation_status')
-            assert created_res.get('translation_language')
+            assert created_res.get('language')
 
     @nose.tools.istest
     def test_a5_create_same_translation_resource(self):
@@ -122,7 +122,7 @@ class TestController(ckan.tests.TestController):
         trans_data = {
                 'package_id': package_data.get('name'),
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 }
         nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_create', context=context, **trans_data)
 
@@ -133,14 +133,14 @@ class TestController(ckan.tests.TestController):
     def test_b1_update_translation_resource_invalid(self):
         context = self.get_context()
         resource = self._get_initial_datastore(package_data.get('name'))
-        res_el = helpers.call_action('resource_show', context=context, id=json.loads(resource.get('has_translations')).get('el'))
+        res_en = helpers.call_action('resource_show', context=context, id=json.loads(resource.get('has_translations')).get('en'))
 
         # Should raise validation error on all
         trans_data = [
                 {
                 # wrong resource id
                 'resource_id': 'wrong-resource-id',
-                'language': 'el',
+                'language': 'en',
                 'mode':'manual',
                 'column_name': 'address',
                 },
@@ -153,21 +153,21 @@ class TestController(ckan.tests.TestController):
                 },
                 {
                 # translation resource id (instead of parent)
-                'resource_id': res_el.get('id'),
-                'language': 'el',
+                'resource_id': res_en.get('id'),
+                'language': 'en',
                 'mode':'manual',
                 'column_name': 'address',
                 },
                 {
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 # wrong translation mode
                 'mode':'no-such-mode',
                 'column_name': 'address',
                 },
                 {
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'manual',
                 # wrong column name
                 'column_name': 'wrong-column-name',
@@ -184,28 +184,28 @@ class TestController(ckan.tests.TestController):
 
         # Should create translation resource correctly
         res = helpers.call_action('resource_show', context=context, id=resource.get('id'))
-        res_el = helpers.call_action('resource_show', context=context, id=json.loads(res.get('has_translations')).get('el'))
-        assert res_el.get('id')
-        assert res_el.get('translation_parent_id') == res.get('id')
+        res_en = helpers.call_action('resource_show', context=context, id=json.loads(res.get('has_translations')).get('en'))
+        assert res_en.get('id')
+        assert res_en.get('translation_parent_id') == res.get('id')
 
         # Update same column twice to make sure no conflicts arise
         trans_data = [{
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'manual',
                 'column_name':'address',
                 },
                 {
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'manual',
                 'column_name':'address',
                 }]
 
         for d in trans_data:
             helpers.call_action('translate_resource_update', context=context, **d)
-            updated_ds = helpers.call_action('datastore_search', context=context, id=res_el.get('id'))
-            assert updated_ds.get('resource_id') == res_el.get('id')
+            updated_ds = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
+            assert updated_ds.get('resource_id') == res_en.get('id')
             assert updated_ds.get('total') == 3
 
     @nose.tools.istest
@@ -215,35 +215,35 @@ class TestController(ckan.tests.TestController):
         #context.update({'locale':'el'})
         # Should create translation resource correctly
         res = helpers.call_action('resource_show', context=context, id=resource.get('id'))
-        res_el = helpers.call_action('resource_show', context=context, id=json.loads(res.get('has_translations')).get('el'))
-        assert res_el.get('id')
-        assert res_el.get('translation_parent_id') == res.get('id')
+        res_en = helpers.call_action('resource_show', context=context, id=json.loads(res.get('has_translations')).get('en'))
+        assert res_en.get('id')
+        assert res_en.get('translation_parent_id') == res.get('id')
 
         trans_data = [{
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'transcription',
                 'column_name':'name',
                 },
                 {
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'manual',
                 'column_name':'name',
                 },
                 {
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'transcription',
                 'column_name':'address',
                 }]
 
         for d in trans_data:
             helpers.call_action('translate_resource_update', context=context, **d)
-            updated_ds = helpers.call_action('datastore_search', context=context, id=res_el.get('id'))
+            updated_ds = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
             pprint.pprint(updated_ds)
 
-            assert updated_ds.get('resource_id') == res_el.get('id')
+            assert updated_ds.get('resource_id') == res_en.get('id')
             assert updated_ds.get('total') == 3
             field_exists = False
             for field in updated_ds.get('fields'):
@@ -252,7 +252,7 @@ class TestController(ckan.tests.TestController):
                     break
             assert field_exists
 
-        res = helpers.call_action('datastore_search', context=context, id=res_el.get('id'))
+        res = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
         for rec in res.get('records'):
             print rec
             # manual translation so should be empty
@@ -270,10 +270,10 @@ class TestController(ckan.tests.TestController):
         #context.update({'locale':'el'})
         # Should create translation resource correctly
         res = helpers.call_action('resource_show', context=context, id=resource.get('id'))
-        res_el = helpers.call_action('resource_show', context=context, id=json.loads(res.get('has_translations')).get('el'))
+        res_en = helpers.call_action('resource_show', context=context, id=json.loads(res.get('has_translations')).get('en'))
 
-        assert res_el.get('id')
-        assert res_el.get('translation_parent_id') == res.get('id')
+        assert res_en.get('id')
+        assert res_en.get('translation_parent_id') == res.get('id')
 
         original_ds = helpers.call_action('datastore_search', context=context, id=res.get('id'))
         # Update ds with 5000 dummy name entries
@@ -293,7 +293,7 @@ class TestController(ckan.tests.TestController):
 
         trans_data = [{
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'mode':'transcription',
                 'column_name':'name',
                 },
@@ -311,7 +311,7 @@ class TestController(ckan.tests.TestController):
 
         for d in trans_data:
             helpers.call_action('translate_resource_update', context=context, **d)
-            updated_ds = helpers.call_action('datastore_search', context=context, id=res_el.get('id'))
+            updated_ds = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
             #pprint.pprint(updated_ds)
 
             #assert updated_ds.get('resource_id') == res_el.get('id')
@@ -322,17 +322,17 @@ class TestController(ckan.tests.TestController):
                     field_exists = True
                     break
             assert field_exists
-        res_first = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=0)
+        res_first = helpers.call_action('datastore_search', context=context, id=res_en.get('id'), offset=0)
         assert len(res_first.get('records')) == PAGE_STEP
         assert res_first.get('records')[3].get('name') == 'lalala'
         pprint.pprint(res_first)
 
-        res_last = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=50*PAGE_STEP-100, limit=PAGE_STEP)
+        res_last = helpers.call_action('datastore_search', context=context, id=res_en.get('id'), offset=50*PAGE_STEP-100, limit=PAGE_STEP)
         assert len(res_last.get('records')) == PAGE_STEP
         assert res_first.get('records')[PAGE_STEP-1].get('name') == 'lalala'
         pprint.pprint(res_last)
 
-        res_none = helpers.call_action('datastore_search', context=context, id=res_el.get('id'), offset=50*PAGE_STEP, limit=PAGE_STEP)
+        res_none = helpers.call_action('datastore_search', context=context, id=res_en.get('id'), offset=50*PAGE_STEP, limit=PAGE_STEP)
         pprint.pprint(res_none)
         assert len(res_none.get('records')) == 0
 
@@ -370,21 +370,32 @@ class TestController(ckan.tests.TestController):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
-        resource_el_id = json.loads(resource.get('has_translations')).get('el')
+        resource_en_id = json.loads(resource.get('has_translations')).get('en')
         #resource_el = p.toolkit.get_action('datastore_search')(context, {'id':resource_el_id})
         # Should delete translation resource correctly
-        trans_data = {
+        
+        trans_data = [{
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 'column_name': 'name'
-                }
-        pprint.pprint(helpers.call_action('translate_resource_delete', context=context, **trans_data))
-        res_el = helpers.call_action('datastore_search', context=context, resource_id=resource_el_id)
-        print "RESULT"
-        pprint.pprint(res_el)
-        for fld in res_el.get('fields'):
-            # assert deleted column does not exist in resource
-            assert not fld.get('id') == 'name'
+                },
+                # should not change sth but not fail either
+                {
+                'resource_id': resource.get('id'),
+                'language': 'en',
+                'column_name': 'name'
+                },
+
+                ]
+
+        for d in trans_data:
+            pprint.pprint(helpers.call_action('translate_resource_delete', context=context, **d))
+            res_en = helpers.call_action('datastore_search', context=context, resource_id=resource_en_id)
+            print "RESULT"
+            pprint.pprint(res_en)
+            for fld in res_en.get('fields'):
+                # assert deleted column does not exist in resource
+                assert not fld.get('id') == 'name'
 
     @nose.tools.istest
     def test_c3_delete_translation_resource_invalid(self):
@@ -401,7 +412,7 @@ class TestController(ckan.tests.TestController):
                     {
                     # non existing resource id
                     'resource_id': 'wrong-resource-id',
-                    'language': 'el'
+                    'language': 'en'
                     }]
 
         for d in trans_data_wrong:
@@ -435,31 +446,31 @@ class TestController(ckan.tests.TestController):
         resource = self._get_initial_datastore(package_data.get('name'))
         context = self.get_context()
 
-        resource_el_id = json.loads(resource.get('has_translations')).get('el')
+        resource_en_id = json.loads(resource.get('has_translations')).get('en')
         # Should delete translation resource correctly
         trans_data = {
                 'resource_id': resource.get('id'),
-                'language': 'el'
+                'language': 'en'
                 }
 
         helpers.call_action('translate_resource_delete', context=context, **trans_data)
         # TODO: assert oringal metadata updates - has_translations and translation resource_deleted
         #deleted_resource = helpers.assert_raises('datastore_search', context=context, resource_id= resource_el_id)
-        nose.tools.assert_raises(p.toolkit.ObjectNotFound, helpers.call_action, 'datastore_search', context=context, resource_id=resource_el_id)
+        nose.tools.assert_raises(p.toolkit.ObjectNotFound, helpers.call_action, 'datastore_search', context=context, resource_id=resource_en_id)
         #print deleted_resource
 
-        deleted_resource = helpers.call_action('resource_show', context=context, id=resource_el_id)
+        deleted_resource = helpers.call_action('resource_show', context=context, id=resource_en_id)
         assert deleted_resource.get('state') == 'deleted'
 
         original_updated_resource = helpers.call_action('resource_show', context=context, id=resource.get('id'))
         assert original_updated_resource.get('has_translations')
-        assert 'el' not in json.loads(original_updated_resource.get('has_translations'))
+        assert 'en' not in json.loads(original_updated_resource.get('has_translations'))
 
         # Try to recreate translation in same language after it has been deleted
         trans_data = {
                 'package_id': package_data.get('name'),
                 'resource_id': resource.get('id'),
-                'language': 'el',
+                'language': 'en',
                 }
 
         created_res = helpers.call_action('translate_resource_create', context=context, **trans_data)
@@ -469,8 +480,8 @@ class TestController(ckan.tests.TestController):
         original_resource = helpers.call_action('resource_show', context=context, id=resource.get('id'))
         assert original_resource.get('id') == created_res.get('translation_parent_id')
         assert original_resource.get('has_translations')
-        assert 'el' in json.loads(original_resource.get('has_translations'))
-        assert json.loads(original_resource.get('has_translations')).get('el') == created_res.get('id')
+        assert 'en' in json.loads(original_resource.get('has_translations'))
+        assert json.loads(original_resource.get('has_translations')).get('en') == created_res.get('id')
 
     # Helpers
     
