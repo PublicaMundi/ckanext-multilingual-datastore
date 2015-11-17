@@ -27,12 +27,12 @@ class GreekLanguagePack(TranslitLanguagePack):
     language_code = "el_EL"
     language_name = "Greek"
     mapping = (
-        u"abgdezhiklmnxoprstyfouABGDEZHIKLMNXOPRSTYFOU",
-        u"αβγδεζηικλμνξοπρστυφωυΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΩΘ",
+        u"aabgdeeziklmnxoprsstyfouABGDEZHIKLMNXOPRSTYFOU",
+        u"αάβγδεέζικλμνξοπρσςτυφωυΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΩΘ",
         )
     reversed_specific_mapping = (
-        u"ηιΗΙωΩυΥ",
-        u"iiIIoOuU"
+        u"αάεέηήιίοόυύωώΑΆΕΈΗΉΙΊΟΌΥΎΩΏ",
+        u"aaeeiiiioouuooAAEEIIIIOOUUOO"
     )
     pre_processor_mapping = {
         u"th": u"θ",
@@ -284,19 +284,6 @@ def translate_resource_delete(context, data_dict):
         # Check if column_name exists in original table
         col_name = unicode(data_dict.get('column_name'))
 
-        # update metadata
-        columns = json.loads(res.get('translation_columns_status','{}'))
-        for k,v in columns.iteritems():
-            if k == col_name:
-                columns.update({k:'no-translate'})
-
-        columns = json.dumps(columns)
-
-        res.update({
-                'translation_columns_status':columns,
-            })
-        res = p.toolkit.get_action('resource_update')(context, res)
-
         # update data
         field_exists = False
         for field in ds.get('fields'):
@@ -312,7 +299,23 @@ def translate_resource_delete(context, data_dict):
         #return
         #pprint.pprint(la)
         #filters = {}
-        return p.toolkit.get_action('datastore_delete')(context, {'resource_id': resource_id, 'filters':filters, 'force':True})
+        deleted = p.toolkit.get_action('datastore_delete')(context, {'resource_id': resource_id, 'filters':filters, 'force':True})
+
+        # update metadata
+        columns = json.loads(res.get('translation_columns_status','{}'))
+        for k,v in columns.iteritems():
+            if k == col_name:
+                columns.update({k:'no-translate'})
+
+        columns = json.dumps(columns)
+
+        res.update({
+                'translation_columns_status':columns,
+            })
+        res = p.toolkit.get_action('resource_update')(context, res)
+        
+        return deleted
+
 
     else:
         # Delete datastore table
@@ -321,7 +324,7 @@ def translate_resource_delete(context, data_dict):
         except:
             return
 
-        # Update metadata and delete resouce
+        # Update metadata and delete resource
         try:
             has_translations = json.loads(original_res.get('has_translations'))
         except p.toolkit.ValidationError:
@@ -922,19 +925,7 @@ def _translate_automatic(context, res, col_name, original_ds, new_ds, language):
     total = original_ds.get('total')
     res_id = original_ds.get('resource_id')
     columns = json.loads(res.get('translation_columns_status','{}'))
-    for k,v in columns.iteritems():
-        if k == col_name:
-            columns.update({k:'automatic'})
-
-    columns = json.dumps(columns)
-    res.update({
-            'translation_columns_status' : columns
-            })
-    print 'before upd'
-        
-    res = p.toolkit.get_action('resource_update')(context, res)
-    print 'after aupd'
-    #es = gettext.translation('guess', localedir='locale', languages=['es'])
+        #es = gettext.translation('guess', localedir='locale', languages=['es'])
 
     offset = 0
     iters = total/PAGE_STEP
@@ -981,6 +972,20 @@ def _translate_automatic(context, res, col_name, original_ds, new_ds, language):
                     'records': nrecs
                     })
         offset=offset+PAGE_STEP
+
+    for k,v in columns.iteritems():
+        if k == col_name:
+            columns.update({k:'automatic'})
+
+    columns = json.dumps(columns)
+    res.update({
+            'translation_columns_status' : columns
+            })
+    print 'before upd'
+
+    res = p.toolkit.get_action('resource_update')(context, res)
+    print 'after aupd'
+
     return new_ds
 
 def _translate_manual(context, res, col_name, original_ds, new_ds):
@@ -1012,15 +1017,7 @@ def _transcript(context, res, col_name, original_ds, new_ds):
     res_id = original_ds.get('resource_id')
     total = original_ds.get('total')
     columns = json.loads(res.get('translation_columns_status','{}'))
-    for k,v in columns.iteritems():
-        if k == col_name:
-            columns.update({k:'transcription'})
-    columns = json.dumps(columns)
-    res.update({
-            'translation_columns_status': columns,
-            })
-    res = p.toolkit.get_action('resource_update')(context, res)
-    
+
     registry.register(GreekLanguagePack)
     offset = 0
     iters = total/PAGE_STEP
@@ -1055,6 +1052,17 @@ def _transcript(context, res, col_name, original_ds, new_ds):
                     'records': nrecs
                     })
         offset=offset+PAGE_STEP
+
+
+    for k,v in columns.iteritems():
+        if k == col_name:
+            columns.update({k:'transcription'})
+    columns = json.dumps(columns)
+    res.update({
+            'translation_columns_status': columns,
+            })
+    res = p.toolkit.get_action('resource_update')(context, res)
+
     return new_ds
 
 def _transcript_string(value):
