@@ -5,8 +5,8 @@
 <div id="windowTitleDialog" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
         </div>
         <!-- <a data-toggle="modal" id="button" href="#windowTitleDialog" class="btn btn-primary btn-large">Click</a> -->
-        <div id="saveButtons" style="float:right"> <a href="#" class="btn" id="saveClicked">{{_('Save')}}</a> <a href="#" class="btn btn-primary" id="publishClicked">{{_('Publish')}}</a> </div>
-        <div id="reclinetranslate" style="min-height:450px; width:100%; height: 80%; overflow-y: auto" data-module="recline_translate_edit_preview" data-module-translation_status="{{status}}" data-module-translation_language = "{{language}}" data-module-site_url="{{ h.dump_json(h.url('/', locale='default', qualified=true)) }}">
+        <div id="saveButtons" > <a href="#" class="btn" id="saveClicked">{{_('Save')}}</a> <a href="#" class="btn btn-primary" id="publishClicked">{{_('Publish')}}</a> </div>
+        <div id="reclinetranslate"  data-module="recline_translate_edit_preview" data-module-translation_status="{{status}}" data-module-translation_language = "{{language}}" data-module-site_url="{{ h.dump_json(h.url('/', locale='default', qualified=true)) }}">
       
           <h4 class="loading-dialog">
       <div class="loading-spinner"></div>

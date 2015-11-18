@@ -54,7 +54,7 @@
         {{ super() }}
         {% endblock %}
 
-        <iframe src="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_datapreview', resource_id=resource_id, id=name_or_id, language=language) }}" frameborder="0" width="100%"  data-module="data-viewer">
+        <iframe src="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_datapreview', resource_id=resource_id, id=name_or_id, language=language) }}" frameborder="0" width="100%" height="100%" style="min-height:450px"  data-module="data-viewer">
         <p>{{ _('Your browser does not support iframes.') }}</p>
         </iframe>
     </div>

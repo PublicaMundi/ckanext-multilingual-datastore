@@ -4,10 +4,17 @@ html{
 body {
   background-color: #fff;
 }
-
+#saveButtons{
+    float:right;
+}
+#reclinetranslate{
+    float:left;
+    width:100%; 
+    overflow-y: auto;
+}
 .recline-data-explorer{
   position: relative;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .loading-dialog {
@@ -15,12 +22,9 @@ body {
 }
 
 .recline-slickgrid {
-  height: 600px;
+  min-height: 450px;
 }
 
-.recline-timeline .vmm-timeline {
-  height: 600px;
-}
 
 .loading-spinner {
   float: right;
