@@ -45,7 +45,6 @@ class UserController(BaseController):
             'user': c.user or c.author,
             'auth_user_obj': c.userobj
         }
-        print 'RESOURCE DATPREV'
         try:
             resource = toolkit.get_action('resource_show')(context,{'id': resource_id})
             resource.update({'resource_package_id':id})
@@ -111,8 +110,6 @@ class UserController(BaseController):
             data = {'resource_id':res.get('id'), 'language':language }
             return toolkit.get_action('translate_resource_unpublish')(context, data)
         #trans_res = self._get_translation_resource(resource_id, language)
-        #print 'TRAN RES after'
-        #print trans_res
 
     def _get_translation_resource(self, res, language):
         context = self._get_context()

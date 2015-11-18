@@ -117,73 +117,18 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                 else:
                     nres_list.append(res)
             data_dict.update({'resources':nres_list})
-            print data_dict.get('resources')
-            print len(data_dict.get('resources'))
-            #data_dict.update({'resources': nres_list})
-            #print data_dict.get('resources')
-            #asd
+            
             return data_dict
 
-        print len(data_dict.get('resources'))
-        print data_dict.get('resources')
-        print 'UPDATED!!!!!!'
-        asd
-        return data_dict
-        new_res_list = []
-        for res in data_dict.get('resources'):
-            if res.get('translation_resource'):
-                found = False
-                for nres in data_dict.get('resources'):
-                    if nres.get('id') == res.get('translation_parent_id') and not nres.get('state') == 'deleted':
-                        found = True
-                        new_res_list.append(res)
-                        break
-            else:
-                new_res_list.append(res)
-            break
-        data_dict.update({'resources': new_res_list})
-
-        return data_dict
-        '''
-        print 'AFTERT UPDATE'
-        for k,v in data_dict.iteritems():
-            if k=='resources':
-                new_res = []
-                for res in v:
-                    print 'res='
-                    print res
-                    if not res.get('resource_language'):
-                        print 'NO RES LANG'
-                        #self.set_orig_language(res, data_dict)
-                        #res.update({'resource_language': 'en'})
-                        print res.get('resource_language')
-        #            if not (('translation_resource' in res) and res.get('translation_status')=='published'):
-        #                new_res.append(res)
-        #        data_dict.update({k:new_res})
-        print 'ALL RESOURCES'
-        pprint.pprint(data_dict['resources'])
-        return data_dict
-        '''
     def before_show(self, resource_dict):
         return resource_dict
-    #def after_update(self, context, data_dict):
-    #    print 'BEFORE UPDATE'
-    #    resources = data_dict.get('resources')
-    #    new_resources = copy.deepcopy(resources)
-    #    for res in resources:
-    #        translations = json.loads(res.get('has_translations', u'{}'))
-    #        for trans,id in translations.iteritems():
-    #            res = p.toolkit.get_action('resource_show')(context, {'id':id})
-    #            new_resources.append(res)
-    #    data_dict.update({'resources':new_resources, 'num_resources':len(new_resources)})
 
     def after_delete(self, context, data_dict):
-        print 'AFTER DELETE'
-        #return data_dict
+        return data_dict
 
     def after_show(self, context, data_dict):
         return data_dict
-        #print context
+        
         if 'user' in context: 
             user_orgs = p.toolkit.get_action('organization_list_for_user')(context, {'id':context.get('user')})
         else:
@@ -218,31 +163,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         # so they are not visible in UI/other API functions
         #return data_dict
         return data_dict
-        '''
-        for k,v in data_dict.iteritems():
-            if k=='resources':
-                new_res = []
-                for res in v:
-                    if not 'translation_resource' in res:
-                        new_res.append(res)
-                data_dict.update({k:new_res})
-        data_dict.update({'num_resources':len(new_res)})
-        
-        #print 'NEW DICT'
-        #pprint.pprint(data_dict.get('resources'))
-        #language = request.environ['CKAN_LANG']
-        #data_dict = {}
-        #context = {}
-        # TODO: Can i replace resource here with 
-        #res = context.get('resource')
-        #print 'res'
-        #del context['resource']
-        #pprint.pprint(res)
-        #res2 = p.toolkit.get_action('resource_show')(context, {'id':json.loads(res.extras.get('has_translations')).get('en')})
-        #print 'res2'
-        #pprint.pprint(res2)
-        return data_dict
-        '''
+    
     def get_actions(self):
         return {
                 'translate_resource_create': action.translate_resource_create,
@@ -290,12 +211,6 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         return published_langs
 
     def _decide_language(self, res):
-        # Have to decide original resource language
-        #if 'inspire' in pkg:
-        #    for lang_code in pkg.get('inspire').resource_language:
-        #        print 'found!'
-        #        print lang_code[:-1]
-                #return lang_code
         return 'el'
 
     def get_orig_language(self, res):
