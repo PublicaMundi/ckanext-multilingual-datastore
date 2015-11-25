@@ -47,7 +47,7 @@ if (isNodeModule) {
 
     var self = this;
 
-    this.action('translate_resource_search', actualQuery, function(err, results) {
+    this.action('resource_translation_search', actualQuery, function(err, results) {
       if (err) {
         cb(err);
         return;

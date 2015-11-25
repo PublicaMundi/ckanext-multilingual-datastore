@@ -43,7 +43,7 @@ if (isNodeModule) {
     actualQuery.language = queryObj.translation_language;
     console.log(actualQuery);
     var self = this;
-    this.action('translate_resource_search', actualQuery, function(err, results) {
+    this.action('resource_translation_search', actualQuery, function(err, results) {
       if (err) {
         cb(err);
         return;
