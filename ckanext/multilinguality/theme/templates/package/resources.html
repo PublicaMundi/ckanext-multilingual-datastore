@@ -4,9 +4,9 @@
   {% if pkg.resources %}
     <ul class="resource-list"{% if has_reorder %} data-module="resource-reorder" data-module-id="{{ pkg.id }}"{% endif %}>
         {% for resource in pkg.resources %}
-        {#  {% if not resource.format == 'data_table' %} #}
+          {% if not resource.format == 'data_table' %} 
         {% snippet 'package/snippets/resource_item.html', pkg=pkg, res=resource, url_is_edit=true %}
-        {# {% endif %} #}
+         {% endif %} 
       {% endfor %}
     </ul>
   {% else %}
