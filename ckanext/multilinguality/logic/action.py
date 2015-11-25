@@ -57,10 +57,18 @@ log = logging.getLogger(__name__)
 _get_or_bust = logic.get_or_bust
 _validate = ckan.lib.navl.dictization_functions.validate
 
-def translate_resource_create(context, data_dict):
+def resource_translation_create(context, data_dict):
     '''Creates a new resource and creates a datastore table associated to
     the original resource whose id is provided
+    
+    :param package_id: the name or id of the package.
+    :type package_id: string
+   
+    :param resource_id: the id of the resource to be translated.
+    :type resource_id: string
 
+    :param language: the target language
+    :type language: string
     '''
     p.toolkit.check_access('translate_resource_create', context, data_dict)
 
@@ -143,10 +151,24 @@ def translate_resource_create(context, data_dict):
 
     return new_res
 
-def translate_resource_update(context, data_dict):
-    '''Update or insert column given the (original) resource_id, language, column_name
-    and translation method(manual, automatic, transcription
+def resource_translation_update(context, data_dict):
+    '''Update resource data column translation given the (original) resource_id, language, column_name
+    and translation method (manual, automatic, transcription, title)
 
+    :param resource_id: the id of the resource under translation.
+    :type resource_id: string
+
+    :param mode: the translation mode, one of: automatic, manual, transcription, title.
+    :type mode: string
+    
+    :param language: the target language
+    :type language: string
+
+    :param column_name: the name of the resource data column to be translated.
+    :type column_name: string
+
+    :param title_translation: column title translation
+    :type title_translation: string
     '''
     p.toolkit.check_access('translate_resource_update', context, data_dict)
 
@@ -202,24 +224,39 @@ def translate_resource_update(context, data_dict):
     #    return _update_title(context, res, translation, col_name )
     #else:
     if mode == 'manual':
+        if title_translation:
+            _update_title(context, res, col_name, title_translation)
         _initialize_column(context, col_name, ds, original_ds.get('total'))
         return _translate_manual(context, res, col_name, original_ds, ds)
     elif mode == 'automatic':
+        if title_translation:
+            _update_title(context, res, col_name, title_translation)
         _initialize_column(context, col_name, ds, original_ds.get('total'))
         return _translate_automatic(context, res, col_name, original_ds, ds, language)
     elif mode == 'transcription':
+        if title_translation:
+            _update_title(context, res, col_name, title_translation)
         _initialize_column(context, col_name, ds, original_ds.get('total'))
-        _transcript(context, res, col_name, original_ds, ds)
+        return _transcript(context, res, col_name, original_ds, ds)
     elif mode == 'title':
         _update_title(context, res, col_name, title_translation)
     else:
         log.info('Should never reach here')
-        return
 
     return
 
-def translate_resource_delete(context, data_dict):
-    '''Delete a column or the whole resource given a (original) resource_id, language and/or column_name
+def resource_translation_delete(context, data_dict):
+    '''Delete a column or the whole resource given a (original) resource_id, language, column_name
+    If no column name is provided the whole resource data table is deleted
+
+    :param resource_id: the id of the resource under translation.
+    :type resource_id: string
+
+    :param language: the target language
+    :type language: string
+
+    :param column_name: the name of the resource data column to be deleted.
+    :type column_name: string
 
     '''
     p.toolkit.check_access('translate_resource_delete', context, data_dict)
@@ -229,10 +266,6 @@ def translate_resource_delete(context, data_dict):
     if errors:
         raise p.toolkit.ValidationError(errors)
 
-    #if not res.get('translation_resource'):
-    #    raise p.toolkit.ValidationError('Resource "{0}" is not a translation resource'.format(res.get('id')))
-
-    #original_res = p.toolkit.get_action('resource_show')(context, {'id': res.get('translation_parent_id')})
     original_res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
 
     if original_res.get('translation_resource'):
@@ -253,10 +286,9 @@ def translate_resource_delete(context, data_dict):
 
 
     # Delete column if option is set
-    # TODO: datastore doesnt support deleting a whole column - dont support this
+    # TODO: datastore doesnt support deleting whole column - dont support this
     filters = {}
     if 'column_name' in data_dict:
-        #filters = {data_dict.get('column_name'):'*'}
         # Delete datastore table
 
         original_ds = p.toolkit.get_action('datastore_search')(context, {'id': original_res.get('id')})
@@ -330,8 +362,11 @@ def translate_resource_delete(context, data_dict):
         upd_original_res = p.toolkit.get_action('resource_update')(context, original_res)
         return p.toolkit.get_action('resource_delete')(context, {'id': resource_id})
 
-def translate_resource_delete_all(context, data_dict):
+def resource_translation_delete_all(context, data_dict):
     '''Delete original resource and all its translations given the resource_id
+
+    :param resource_id: the id of the resource to be deleted.
+    :type resource_id: string
 
     '''
     p.toolkit.check_access('translate_resource_delete', context, data_dict)
@@ -341,17 +376,10 @@ def translate_resource_delete_all(context, data_dict):
     if errors:
         raise p.toolkit.ValidationError(errors)
 
-    #if not res.get('translation_resource'):
-    #    raise p.toolkit.ValidationError('Resource "{0}" is not a translation resource'.format(res.get('id')))
-    #original_res = p.toolkit.get_action('resource_show')(context, {'id': res.get('translation_parent_id')})
     original_res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
-
-    #if original_res.get('translation_resource'):
-        #raise p.toolkit.ValidationError('Resource "{0}" is translation resource, please provide original resource id'.format(original_res.get('id')))
 
     language = data_dict.get('language')
 
-    
     has_translations = json.loads(original_res.get('has_translations','{}'))
     orig_language = original_res.get('language', 'el')
 
@@ -360,9 +388,15 @@ def translate_resource_delete_all(context, data_dict):
 
     return p.toolkit.get_action('resource_delete')(context, {'id': original_res.get('id')})
 
-def translate_resource_publish(context, data_dict):
-    '''Publishes the translation resource
-    by changing its state
+def resource_translation_publish(context, data_dict):
+    '''Publishes the translation resource by changing its state
+
+    :param resource_id: the id of the resource under translation.
+    :type resource_id: string
+
+    :param language: the target language
+    :type language: string
+
     '''
     p.toolkit.check_access('translate_resource_publish', context, data_dict)
 
@@ -406,9 +440,15 @@ def translate_resource_publish(context, data_dict):
     res = p.toolkit.get_action('resource_update')(context, res)
     return res
 
-def translate_resource_unpublish(context, data_dict):
-    '''Unpublishes the translation resource
-        by changing its state
+def resource_translation_unpublish(context, data_dict):
+    '''Unpublishes the translation resource by changing its state
+
+    :param resource_id: the id of the resource under translation.
+    :type resource_id: string
+
+    :param language: the target language
+    :type language: string
+
     '''
     p.toolkit.check_access('translate_resource_publish', context, data_dict)
 
@@ -416,8 +456,6 @@ def translate_resource_unpublish(context, data_dict):
     data_dict, errors = _validate(data_dict, schema, context)
     if errors:
         raise p.toolkit.ValidationError(errors)
-    #package = p.toolkit.get_action('dataset_show')(context, {'id': data_dict.get('package_id')})
-    #res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
 
     original_res = p.toolkit.get_action('resource_show')(context, {'id': data_dict.get('resource_id')})
 
@@ -450,10 +488,38 @@ def translate_resource_unpublish(context, data_dict):
 
 
 @logic.side_effect_free
-def translate_resource_search(context, data_dict):
-    '''Search translation resources given resource_id, language and datastore_search filters?'''
-    # TODO : check access not working correctly, doesnt allow access via api, why??
-    #p.toolkit.check_access('translate_resource_search', context, data_dict)
+def resource_translation_search(context, data_dict):
+    ''' Search data in a translated resource.
+
+    :param resource_id: the id of the original resource to be searched against.
+    :type resource_id: string
+
+    :param language: the target language
+    :type language: string
+
+    :param filters: matching conditions to select, e.g {"key1": "a", "key2": "b"} (optional)
+    :type filters: dictionary
+
+    :param q: full text query (optional)
+    :type q: string
+
+    :param plain: treat as plain text query (optional, default: true)
+    :type plain: bool
+
+    :param limit: maximum number of rows to return (optional, default: 100)
+    :type limit: int
+
+    :param offset: offset this number of rows (optional)
+    :type offset: int
+
+    :param fields: fields to return (optional, default: all fields in original order)
+    :type fields: list or comma separated string
+
+    :param sort: comma separated field names with ordering
+                 e.g.: "fieldname1, fieldname2 desc"
+    :type sort: string
+
+    '''
 
     schema = context.get('schema', dsschema.translate_resource_search_schema())
 

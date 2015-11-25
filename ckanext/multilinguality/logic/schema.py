@@ -82,13 +82,7 @@ def translate_resource_create_schema():
     schema = {
         'package_id': [not_missing, not_empty, unicode, package_id_or_name_exists],
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
-        'mode': [ignore_missing, unicode, OneOf(
-            ['automatic', 'manual', 'transcription'])],
         'language': [not_missing, unicode ],
-        #lang_length_validator
-            #OneOf(
-            #['en', 'el','es', 'de', 'fr'])
-            #],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]
     }
@@ -98,13 +92,11 @@ def translate_resource_update_schema():
     schema = {
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
         'language': [not_missing, unicode],
-            #, lang_length_validator],
         'column_name': [not_missing, not_empty, unicode],
         'title_translation': [ignore_missing, unicode],
         'force': [ignore_missing, boolean_validator],
         'mode': [not_missing, unicode, OneOf(
             ['automatic', 'manual', 'transcription', 'title'])],
-        'translation': [ignore_missing, unicode],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]
     }
@@ -114,7 +106,6 @@ def translate_resource_delete_schema():
     schema = {
         'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
         'language': [not_missing, unicode],
-        #, lang_length_validator],
         'column_name': [ignore_missing, unicode],
         'force': [ignore_missing, boolean_validator],
         '__junk': [empty],
@@ -136,7 +127,6 @@ def translate_resource_publish_schema():
     schema = {
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
         'language': [not_missing, unicode],
-        #, lang_length_validator],
         '__junk': [empty],
         '__before': [rename('id', 'resource_id')]
     }
@@ -146,7 +136,6 @@ def translate_resource_search_schema():
     schema = {
         'resource_id': [not_missing, not_empty, resource_id_exists, unicode],
         'language': [not_missing, unicode],
-        #, lang_length_validator],
         'edit_mode': [ignore_missing, boolean_validator],
         'q': [ignore_missing, unicode],
         'plain': [ignore_missing, boolean_validator],

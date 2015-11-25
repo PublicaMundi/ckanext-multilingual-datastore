@@ -110,8 +110,6 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
                             break
                     if not found:
                         pass
-                        #nres_list.append(res)
-                        #p.toolkit.get_action('translate_resource_delete')(context, {'id':res.get('id'), 'lang':})
                     else:
                         nres_list.append(res)
                 else:
@@ -166,13 +164,13 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
     
     def get_actions(self):
         return {
-                'translate_resource_create': action.translate_resource_create,
-                'translate_resource_update': action.translate_resource_update,
-                'translate_resource_search': action.translate_resource_search,
-                'translate_resource_delete': action.translate_resource_delete,
-                'translate_resource_delete_all': action.translate_resource_delete_all,
-                'translate_resource_publish': action.translate_resource_publish,
-                'translate_resource_unpublish': action.translate_resource_unpublish,
+                'resource_translation_create': action.resource_translation_create,
+                'resource_translation_update': action.resource_translation_update,
+                'resource_translation_search': action.resource_translation_search,
+                'resource_translation_delete': action.resource_translation_delete,
+                'resource_translation_delete_all': action.resource_translation_delete_all,
+                'resource_translation_publish': action.resource_translation_publish,
+                'resource_translation_unpublish': action.resource_translation_unpublish,
                 }
 
     def _get_context(self):

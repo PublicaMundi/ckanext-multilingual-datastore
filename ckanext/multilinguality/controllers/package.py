@@ -10,7 +10,6 @@ NotAuthorized = toolkit.NotAuthorized
 
 class UserController(BaseController):
     def resource_translate(self, resource_id, id, language):
-        #self._change_trans_res_status(resource_id, language)
         pkg_dict = self._check_pkg_access(id)
         res = self._check_res_access(resource_id)
         self._check_trans_res_status(res, language)
@@ -93,7 +92,7 @@ class UserController(BaseController):
     def _delete_all_resources(self, resource_id):
         context = self._get_context()
         try:
-            res = toolkit.get_action('translate_resource_delete_all')(context, {'resource_id':resource_id})
+            res = toolkit.get_action('resource_translation_delete_all')(context, {'resource_id':resource_id})
             return res
         except NotFound:
             abort(404, _('Resource not found'))
@@ -108,7 +107,7 @@ class UserController(BaseController):
             return
         if trans_res.get('translation_status') == 'published':
             data = {'resource_id':res.get('id'), 'language':language }
-            return toolkit.get_action('translate_resource_unpublish')(context, data)
+            return toolkit.get_action('resource_translation_unpublish')(context, data)
         #trans_res = self._get_translation_resource(resource_id, language)
 
     def _get_translation_resource(self, res, language):

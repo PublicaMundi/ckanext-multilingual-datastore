@@ -17,7 +17,7 @@ function TranslateHelper (resource, lang){
     this.create = function(ld, cb) {
         console.log('creating..');
         console.log(resource);
-        var url = resource.endpoint + '/3/action/translate_resource_create';
+        var url = resource.endpoint + '/3/action/resource_translation_create';
         
         //var package_id = this._strip_package_id(resource.url);
         var package_id = resource.resource_package_id;
@@ -41,7 +41,7 @@ function TranslateHelper (resource, lang){
         console.log('updating..');
         console.log(title_trans);
         var self = this;
-        var url = resource.endpoint + '/3/action/translate_resource_update';
+        var url = resource.endpoint + '/3/action/resource_translation_update';
         
         //var translations = {};
         //try{
@@ -76,7 +76,7 @@ function TranslateHelper (resource, lang){
         console.log(col_name);
         var self = this;
 
-        var url = resource.endpoint + '/3/action/translate_resource_delete';
+        var url = resource.endpoint + '/3/action/resource_translation_delete';
         
         /*var translations = {};
         try{
@@ -109,7 +109,7 @@ function TranslateHelper (resource, lang){
     this.publish = function(options, ld, cb) {
         console.log('publishing..');
         console.log(resource);
-        var url = resource.endpoint + '/3/action/translate_resource_publish';
+        var url = resource.endpoint + '/3/action/resource_translation_publish';
         /*
         var translations = {};
         try{
@@ -134,7 +134,7 @@ function TranslateHelper (resource, lang){
     this.unpublish = function(options, ld, cb) {
         console.log('unpublishing..');
         console.log(resource);
-        var url = resource.endpoint + '/3/action/translate_resource_unpublish';
+        var url = resource.endpoint + '/3/action/resource_translation_unpublish';
         /*
         var translations = {};
         try{

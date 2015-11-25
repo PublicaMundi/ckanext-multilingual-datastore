@@ -49,7 +49,7 @@ class TestController(ckan.tests.TestController):
         context = self.get_context()
         context.update({'ignore_auth':False})
 
-        nose.tools.assert_raises(logic.NotAuthorized, helpers.call_action, 'translate_resource_create', context=context)
+        nose.tools.assert_raises(logic.NotAuthorized, helpers.call_action, 'resource_translation_create', context=context)
 
     @nose.tools.istest
     def test_a3_create_translation_resource_invalid(self):
@@ -88,7 +88,7 @@ class TestController(ckan.tests.TestController):
 
         for d in incomplete_or_wrong_trans_data:
             nose.tools.assert_raises(p.toolkit.ValidationError,
-                                    helpers.call_action, 'translate_resource_create', context = context, **d)
+                                    helpers.call_action, 'resource_translation_create', context = context, **d)
 
     @nose.tools.istest
     def test_a4_create_translation_resource(self):
@@ -107,7 +107,7 @@ class TestController(ckan.tests.TestController):
                 'language': 'es',
                 }]
         for d in trans_data:
-            created_res = helpers.call_action('translate_resource_create', context=context, **d)
+            created_res = helpers.call_action('resource_translation_create', context=context, **d)
             assert created_res.get('id')
             assert created_res.get('translation_resource')
             assert created_res.get('translation_status')
@@ -124,7 +124,7 @@ class TestController(ckan.tests.TestController):
                 'resource_id': resource.get('id'),
                 'language': 'en',
                 }
-        nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_create', context=context, **trans_data)
+        nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'resource_translation_create', context=context, **trans_data)
 
     ###
     ### Translate Resource Update Tests
@@ -174,8 +174,8 @@ class TestController(ckan.tests.TestController):
                 }]
 
         for d in trans_data:
-            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_update', context=context, **d)
-            #pprint.pprint(helpers.call_action ('translate_resource_update', context=context, **d))
+            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'resource_translation_update', context=context, **d)
+            #pprint.pprint(helpers.call_action ('resource_translation_update', context=context, **d))
 
     @nose.tools.istest
     def test_b2_update_translation_resource(self):
@@ -203,7 +203,7 @@ class TestController(ckan.tests.TestController):
                 }]
 
         for d in trans_data:
-            helpers.call_action('translate_resource_update', context=context, **d)
+            helpers.call_action('resource_translation_update', context=context, **d)
             updated_ds = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
             assert updated_ds.get('resource_id') == res_en.get('id')
             assert updated_ds.get('total') == 3
@@ -239,7 +239,7 @@ class TestController(ckan.tests.TestController):
                 }]
 
         for d in trans_data:
-            helpers.call_action('translate_resource_update', context=context, **d)
+            helpers.call_action('resource_translation_update', context=context, **d)
             updated_ds = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
             pprint.pprint(updated_ds)
 
@@ -310,7 +310,7 @@ class TestController(ckan.tests.TestController):
         ]
 
         for d in trans_data:
-            helpers.call_action('translate_resource_update', context=context, **d)
+            helpers.call_action('resource_translation_update', context=context, **d)
             updated_ds = helpers.call_action('datastore_search', context=context, id=res_en.get('id'))
             #pprint.pprint(updated_ds)
 
@@ -363,7 +363,7 @@ class TestController(ckan.tests.TestController):
                 }]
 
         for d in trans_data:
-            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_delete', context=context, **d)
+            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'resource_translation_delete', context=context, **d)
 
     @nose.tools.istest
     def test_c2_delete_translation_resource_column(self):
@@ -389,7 +389,7 @@ class TestController(ckan.tests.TestController):
                 ]
 
         for d in trans_data:
-            pprint.pprint(helpers.call_action('translate_resource_delete', context=context, **d))
+            pprint.pprint(helpers.call_action('resource_translation_delete', context=context, **d))
             res_en = helpers.call_action('datastore_search', context=context, resource_id=resource_en_id)
             print "RESULT"
             pprint.pprint(res_en)
@@ -416,7 +416,7 @@ class TestController(ckan.tests.TestController):
                     }]
 
         for d in trans_data_wrong:
-            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'translate_resource_delete', context=context, **d)
+            nose.tools.assert_raises(p.toolkit.ValidationError, helpers.call_action, 'resource_translation_delete', context=context, **d)
 
 
     @nose.tools.istest
@@ -431,7 +431,7 @@ class TestController(ckan.tests.TestController):
                 'language': 'es'
                 }
 
-        helpers.call_action('translate_resource_delete', context=context, **trans_data)
+        helpers.call_action('resource_translation_delete', context=context, **trans_data)
         res = helpers.call_action('resource_show', context=context, id=resource_es_id)
         assert res.get('id')
         assert res.get('state') == 'deleted'
@@ -453,7 +453,7 @@ class TestController(ckan.tests.TestController):
                 'language': 'en'
                 }
 
-        helpers.call_action('translate_resource_delete', context=context, **trans_data)
+        helpers.call_action('resource_translation_delete', context=context, **trans_data)
         # TODO: assert oringal metadata updates - has_translations and translation resource_deleted
         #deleted_resource = helpers.assert_raises('datastore_search', context=context, resource_id= resource_el_id)
         nose.tools.assert_raises(p.toolkit.ObjectNotFound, helpers.call_action, 'datastore_search', context=context, resource_id=resource_en_id)
@@ -473,7 +473,7 @@ class TestController(ckan.tests.TestController):
                 'language': 'en',
                 }
 
-        created_res = helpers.call_action('translate_resource_create', context=context, **trans_data)
+        created_res = helpers.call_action('resource_translation_create', context=context, **trans_data)
         assert created_res.get('id')
         assert created_res.get('translation_resource')
 
