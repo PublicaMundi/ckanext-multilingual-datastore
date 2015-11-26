@@ -3,12 +3,11 @@
 
 {% block content_action %}
 {{ super() }}
-{# {% link_for  _('Translate'), controller='ckanext.multilinguality.controllers.package:UserController', action='resource_translate', resource_id=res.id, id=pkg.name, class_='btn', icon='flag' %} #}
 {% block translate_item_explore %}
 
 {% block translation_status_modal %}
 
-{% resource 'ckanext-multilinguality/check_status.js' %}
+{% resource 'ckanext-multilingual_datastore/check_status.js' %}
 {% endblock %}
 
  {% if res.datastore_active %}
@@ -24,7 +23,7 @@
     {% for locale in h.get_available_locales() %}
         {% if not locale == h.get_orig_language(res) %}
         <li>
-        <a data-module="check_status" data-module-language="{{ locale.english_name}}" data-module-status="{{ h.get_language_translation_status(res, locale)}}" href="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_translate', resource_id=res.id, id=pkg.name, language=locale) }}">{{ h.get_orig_language(res).display_name }} -> {{ locale.display_name }}</a>
+        <a data-module="check_status" data-module-language="{{ locale.english_name}}" data-module-status="{{ h.get_language_translation_status(res, locale)}}" href="{{ h.url_for(controller='ckanext.multilingual_datastore.controllers.resource:ResourceController', action='resource_translate', resource_id=res.id, id=pkg.name, language=locale) }}">{{ h.get_orig_language(res).display_name }} -> {{ locale.display_name }}</a>
         </li>
         {% endif %}
       {% endfor %}

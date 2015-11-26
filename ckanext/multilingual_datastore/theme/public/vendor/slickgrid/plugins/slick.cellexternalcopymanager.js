@@ -53,6 +53,7 @@
       // without this, if the user selects a range of cell without giving focus on a particular cell, the grid doesn't get the focus and key stroke handles (ctrl+c) don't work
       cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args){
         _grid.focus();
+
       });
     }
 
@@ -141,7 +142,7 @@
       var selectedRange = ranges && ranges.length ? ranges[0] : null;   // pick only one selection
       var activeRow = null;
       var activeCell = null;
-      
+     
       if (selectedRange){
         activeRow = selectedRange.fromRow;
         activeCell = selectedRange.fromCell;
@@ -169,6 +170,7 @@
         for(addRows = 1; addRows <= destH - availableRows; addRows++)
             d.push({});
         _grid.setData(d);
+        _grid.invalidate();
         _grid.render();
       }  
       var clipCommand = {

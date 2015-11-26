@@ -14,8 +14,8 @@
       {% set organization = pkg_dict.organization.title or pkg_dict.organization.name %}
       <li>{% link_for _('Organizations'), controller='organization', action='index' %}</li>
       <li>{% link_for organization|truncate(30), controller='organization', action='read', id=pkg_dict.organization.name %}</li>
-      <li>{% link_for dataset|truncate(30), controller='package', action='read', id=pkg.id %}
-      <li>{% link_for h.resource_display_name(resource)|truncate(30), controller='package', action='resource_read', id=pkg.id, resource_id=resource_id %}
+      <li>{% link_for dataset|truncate(30), controller='package', action='read', id=pkg.id %}</li>
+      <li>{% link_for h.resource_display_name(resource)|truncate(30), controller='package', action='resource_read', id=pkg.id, resource_id=resource_id %}</li>
       <li class="active"><a href="{{ h.full_current_url()}}">{{_('Translation')|truncate(30) }}</a></li> 
     {% else %}
       <li>{% link_for _('Datasets'), controller='package', action='search' %}</li>
@@ -53,8 +53,7 @@
         {% block resource_content %}
         {{ super() }}
         {% endblock %}
-
-        <iframe src="{{ h.url_for(controller='ckanext.multilinguality.controllers.package:UserController', action='resource_datapreview', resource_id=resource_id, id=name_or_id, language=language) }}" frameborder="0" width="100%" height="100%" style="min-height:450px"  data-module="data-viewer">
+        <iframe src="{{ h.url_for(controller='ckanext.multilingual_datastore.controllers.resource:ResourceController', action='resource_datapreview', resource_id=resource_id, id=name_or_id, language=language) }}" frameborder="0" width="100%" height="100%" style="min-height:450px"  data-module="data-viewer">
         <p>{{ _('Your browser does not support iframes.') }}</p>
         </iframe>
     </div>

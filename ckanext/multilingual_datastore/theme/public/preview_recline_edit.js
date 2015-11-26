@@ -49,7 +49,8 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
       // hack to make leaflet use a particular location to look for images
       //this.button = jQuery("#button");
       //var html = '<a href="#" class="btn" id="saveClicked">Save</a> <a href="#" class="btn btn-primary" id="publishClicked">Publish</a>';
-
+      console.log('GELLO');
+      console.log($('#field-package-name').data('package-name'));
       this.save_btn = jQuery("#saveClicked");
       this.publish_btn = jQuery("#publishClicked");
       this.el.ready(this._onReady);
@@ -107,7 +108,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
         // CKAN DataStore)
         //resourceData.endpoint = jQuery('body').data('site-root') + 'api';
         resourceData.endpoint = this.options.site_url + 'api';
-         
+        console.log(resourceData); 
         resourceData.translation_language = lang;
          
         var dataset = new recline.Model.Dataset(resourceData);
@@ -214,43 +215,21 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
 
                 dataset.queryState.bind('save', function(){
 
-                    //translate.update(options, this._onLoad, this._onComplete);
-                    //dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: true});
-                    //setTimeout(function(){ dataExplorer.model.fetch()}, 3000);
-                    //console.log('dataset being saved...');
-                    //self.sandbox.notify('hello', 'success');
-                    //self.sandbox.client.favoriteDataset(this.button.val()).done(self._onSuccess);
-                    //self._onComplete();
+                    dataset.save();
                     
-                    //dataset.save();
-                    //.done(function(){
-                    //});
                 });
 
                 self.save_btn.click(function() {
                     //console.log('dataset being saved...');
                     dataset.save();
                     dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: false});
-                    //setTimeout(function(){ dataExplorer.model.fetch()}, 3000);
-                    //self.sandbox.notify('hello', 'success');
                 });
-                console.log('resdat');
-                console.log(resourceData);
                 self.publish_btn.click(function() {
-                    //TODO: Save before publishing - something doesnt work
-                        //function(dataset){
-                     //   alert('done saving');
-                    //translate.publish(self._onLoad, function() { window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))})
-                        //dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: false});
+                        //TODO: Save before publishing, need timeout?
                         dataset.save();
-                        //window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'));
                         self.publishWithConfirmation(self._onLoad, function() { 
-                            //window.top.location.href = resourceData.url.substring(0,resourceData.url.indexOf('resource'))
-                           //TODO: find better way to do this
-                            window.top.location.href = resourceData.endpoint.substring(0, resourceData.endpoint.indexOf('/api')) + '/dataset/' + resourceData.resource_package_id;
+                            window.top.location.href = '/dataset/' + resourceData.package_name;
                         }); 
-                    //})
-                    //});
 
                 })
                 

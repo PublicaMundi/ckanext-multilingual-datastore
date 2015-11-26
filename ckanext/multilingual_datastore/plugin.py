@@ -6,9 +6,9 @@ from ckan.common import request
 from routes.mapper import SubMapper
 import ckan.model as model
 
-import ckanext.multilinguality.logic.action as action
-import ckanext.multilinguality.logic.auth as auth
-import ckanext.multilinguality.controllers.package as package_controller
+import ckanext.multilingual_datastore.logic.action as action
+import ckanext.multilingual_datastore.logic.auth as auth
+import ckanext.multilingual_datastore.controllers.package as package_controller
 import ckan.lib.i18n as i18n
 
 import pprint
@@ -16,7 +16,7 @@ import json
 log = getLogger(__name__)
 
 
-class ReclinePreviewMultilinguality(p.SingletonPlugin):
+class MultilingualDatastore(p.SingletonPlugin):
     """This extension previews resources using recline
 
         This extension implements two interfaces
@@ -42,7 +42,7 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         '''
         toolkit.add_public_directory(config, 'theme/public')
         toolkit.add_template_directory(config, 'theme/templates')
-        toolkit.add_resource('theme/public', 'ckanext-multilinguality')
+        toolkit.add_resource('theme/public', 'ckanext-multilingual_datastore')
 
     def get_helpers(self):
         return {
@@ -72,22 +72,22 @@ class ReclinePreviewMultilinguality(p.SingletonPlugin):
         mapper.connect(
                 'resource_translate',
                 '/dataset/{id}/resource_translate/{resource_id}/language/{language}',
-                controller='ckanext.multilinguality.controllers.package:UserController',
+                controller='ckanext.multilingual_datastore.controllers.resource:ResourceController',
                 action = 'resource_translate')
 
         mapper.connect(
                 'translation_resources_delete',
                 '/dataset/{id}/translation_resources_delete/{resource_id}/',
-                controller='ckanext.multilinguality.controllers.package:UserController',
+                controller='ckanext.multilingual_datastore.controllers.resource:ResourceController',
                 action = 'translation_resources_delete')
 
         mapper.connect(
                 '/dataset/{id}/resource_translate_inner/{resource_id}/{language}',
-                controller='ckanext.multilinguality.controllers.package:UserController',
+                controller='ckanext.multilingual_datastore.controllers.resource:ResourceController',
                 action = 'resource_datapreview')
 
         #mapper.connect('/translate/dump/{resource_id}/{language}',
-        #          controller='ckanext.multilinguality.controller:DatastoreController',
+        #          controller='ckanext.multilingual_datastore.controller:DatastoreController',
         #          action='dump')
 
         return mapper

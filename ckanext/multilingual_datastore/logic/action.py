@@ -9,6 +9,9 @@ import sqlalchemy
 import json
 import pprint
 import gettext
+import uuid
+
+from transliterate.base import TranslitLanguagePack, registry
 from transliterate import translit
 
 import ckan.lib.navl.dictization_functions
@@ -16,12 +19,12 @@ import ckan.lib.i18n as i18n
 import ckan.logic as logic
 import ckan.plugins as p
 from ckan.common import _
-import ckanext.multilinguality.logic.schema as dsschema
 
-import uuid
+import ckanext.multilingual_datastore.logic.schema as dsschema
 
-PAGE_STEP = int(pylons.config.get('ckanext.multilingual.resources.page_step', 100))
-from transliterate.base import TranslitLanguagePack, registry
+
+
+PAGE_STEP = int(pylons.config.get('ckanext.multilingual_datastore.resources.page_step', 100))
 
 class GreekLanguagePack(TranslitLanguagePack):
     language_code = "el_EL"
@@ -486,7 +489,6 @@ def resource_translation_unpublish(context, data_dict):
     res = p.toolkit.get_action('resource_update')(context, res)
     return res
 
-
 @logic.side_effect_free
 def resource_translation_search(context, data_dict):
     ''' Search data in a translated resource.
@@ -535,6 +537,7 @@ def resource_translation_search(context, data_dict):
 
     # if resource asked in original language return it
     if data_dict.get('language') == res.get('language'):
+        del data_dict['language']
         return p.toolkit.get_action('datastore_search')(context, data_dict)
 
     has_translations = json.loads(res.get('has_translations', '{}'))
@@ -834,7 +837,8 @@ def _where(field_ids, data_dict):
 
 def _textsearch_query(data_dict):
     q = data_dict.get('q')
-    lang = data_dict.get(u'language', u'english')
+    #lang = data_dict.get(u'language', u'english')
+    lang =  u'english'
     #lang = u'english'
     if q:
         

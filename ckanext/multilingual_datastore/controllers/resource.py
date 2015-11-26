@@ -8,7 +8,7 @@ import json
 NotFound = toolkit.ObjectNotFound
 NotAuthorized = toolkit.NotAuthorized
 
-class UserController(BaseController):
+class ResourceController(BaseController):
     def resource_translate(self, resource_id, id, language):
         pkg_dict = self._check_pkg_access(id)
         res = self._check_res_access(resource_id)
@@ -46,9 +46,10 @@ class UserController(BaseController):
         }
         try:
             resource = toolkit.get_action('resource_show')(context,{'id': resource_id})
-            resource.update({'resource_package_id':id})
-            c.resource = resource
             c.package = toolkit.get_action('package_show')(context, {'id': id})
+
+            resource.update({'package_name':c.package.get('name')})
+            c.resource = resource
             c.resource_language = language
 
             data_dict = {'resource': c.resource, 'package': c.package}

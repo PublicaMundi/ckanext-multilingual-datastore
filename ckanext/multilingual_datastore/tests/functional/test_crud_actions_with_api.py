@@ -14,7 +14,7 @@ import ckan.model as model
 import ckan.logic as logic
 import ckan.plugins as p
 
-PAGE_STEP = int(config.get('ckanext.multilingual.resources.page_step', 100))
+PAGE_STEP = int(config.get('ckanext.multilingual_datastore.resources.page_step', 100))
 
 class TestController(ckan.tests.TestController):
 

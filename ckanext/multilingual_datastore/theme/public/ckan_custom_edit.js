@@ -85,7 +85,6 @@ if (isNodeModule) {
         
         field.sortable = label.length === 0 ? true : false;
         field.translation_field = label.length === 0 ? false : true;
-        //field.status = field.id in translation_columns_status ? translation_columns_status[field.id] : 'default';
         if (field.id in translation_columns_status){
             field.status = translation_columns_status[field.id];
         }
@@ -116,7 +115,6 @@ if (isNodeModule) {
      
       var out = {
             total: results.result.total,
-            //fields: fields,
             fields: results.result.fields,
             hits: results.result.records,
             };
@@ -139,7 +137,6 @@ if (isNodeModule) {
        // map ckan types to our usual types ...
       var fields = _.map(results.result.fields, function(field) {
         field.type = field.type in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.type] : field.type;
-        //field.state = field.state in my.ckan2JsonTableSchemaTypes ? my.ckan2JsonTableSchemaTypes[field.state] : field.state;
         return field;
       });
      
@@ -157,20 +154,16 @@ if (isNodeModule) {
 
   my.Client.prototype.datastoreUpdate = function(queryObj, cb) {
     var actualQuery = my._normalizeQuery(queryObj);
-    
+    console.log('queryObj');
+   console.log(queryObj); 
     actualQuery['method'] = 'upsert';
     actualQuery['allow_update_with_id'] = true;
     actualQuery['force'] = true;
-    //actualQuery['records'] = 
     var updates = queryObj.updates;
     console.log('QueryObj');
     console.log(queryObj);
     actualQuery['resource_id'] = queryObj.translation_resource;
-    //records = actualQuery.records;
     var records = [];
-    //var col_name = queryObj.translation_column;
-    //console.log('COLNAME');
-    //console.log(col_name);
     var extra = '-' + queryObj.translation_language;
     var new_updates = [];
     updates.forEach(function(upd, idx){

@@ -122,7 +122,6 @@ def translate_resource_delete_all_schema():
     }
     return schema
 
-
 def translate_resource_publish_schema():
     schema = {
         'resource_id': [not_missing, not_empty, unicode, resource_id_exists],
@@ -148,5 +147,4 @@ def translate_resource_search_schema():
         '__before': [rename('id', 'resource_id')]
     }
     return schema
-
 
