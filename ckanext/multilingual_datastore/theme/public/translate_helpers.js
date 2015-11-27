@@ -10,8 +10,6 @@ function TranslateHelper (resource, lang){
     this.initialize = function (resource, lang) {
         this.resource = resource;
         this.lang = lang; 
-        console.log('HELP');
-        console.log(this.lang);
     };
 
     this.create = function(ld, cb) {
@@ -20,8 +18,7 @@ function TranslateHelper (resource, lang){
         var url = resource.endpoint + '/3/action/resource_translation_create';
         
         //var package_id = this._strip_package_id(resource.url);
-        var package_id = resource.resource_package_id;
-        console.log(package_id);
+        var package_id = resource.package_name;
         var options = {
             resource_id:resource.id,
             package_id: package_id,

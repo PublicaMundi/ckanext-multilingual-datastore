@@ -77,6 +77,7 @@ def resource_translation_create(context, data_dict):
 
     schema = context.get('schema', dsschema.translate_resource_create_schema())
     data_dict, errors = _validate(data_dict, schema, context)
+    print data_dict
     if errors:
         raise p.toolkit.ValidationError(errors)
 
@@ -387,7 +388,7 @@ def resource_translation_delete_all(context, data_dict):
     orig_language = original_res.get('language', 'el')
 
     for lang, trans_res in has_translations.iteritems():
-        p.toolkit.get_action('translate_resource_delete')(context, {'resource_id': original_res.get('id'), 'language': lang})
+        p.toolkit.get_action('resource_translation_delete')(context, {'resource_id': original_res.get('id'), 'language': lang})
 
     return p.toolkit.get_action('resource_delete')(context, {'id': original_res.get('id')})
 
@@ -838,8 +839,8 @@ def _where(field_ids, data_dict):
 def _textsearch_query(data_dict):
     q = data_dict.get('q')
     #lang = data_dict.get(u'language', u'english')
-    lang =  u'english'
-    #lang = u'english'
+    #lang =  u'greek'
+    lang = u'english'
     if q:
         
         orig_resource = data_dict.get('resource_id')
