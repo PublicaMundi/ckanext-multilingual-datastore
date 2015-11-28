@@ -4537,7 +4537,6 @@ my.SlickGrid = Backbone.View.extend({
         console.log('in here');
         sortable = field.sortable;
     }
-    console.log(field);
     /*
     var lang = window.location.pathname.slice(-2);
     if (typeof(field.translation_field) === 'undefined'){
@@ -4556,12 +4555,9 @@ my.SlickGrid = Backbone.View.extend({
     //var lang = this.options.translation_language;
     var extra = '-' + lang;
     var pos = field.id.indexOf(extra);
-    console.log('selecting editor');
-    console.log(field);
     if (field.translation_field){
         editor = Slick.Editors.Text;
     }
-    console.log(editor);
     var column = {
         id: field.id,
         name: field.label,
@@ -4783,10 +4779,8 @@ my.SlickGrid = Backbone.View.extend({
 
       var $li, $input, $label;
       
-      if (args.column.id.indexOf(getTransSuffix(lang))>0){
+      if (args.column.id.indexOf(getTransSuffix(lang))>0 || args.column.id == '_id'){
          return;
-         
-      
       }
       else{
       
