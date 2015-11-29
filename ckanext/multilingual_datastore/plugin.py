@@ -8,7 +8,6 @@ import ckan.model as model
 
 import ckanext.multilingual_datastore.logic.action as action
 import ckanext.multilingual_datastore.logic.auth as auth
-import ckanext.multilingual_datastore.controllers.package as package_controller
 import ckan.lib.i18n as i18n
 
 import pprint
