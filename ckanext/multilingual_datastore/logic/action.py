@@ -30,20 +30,21 @@ class GreekLanguagePack(TranslitLanguagePack):
     language_code = "el_EL"
     language_name = "Greek"
     mapping = (
-        u"aabgdeeziklmnxoprsstyfouABGDEZHIKLMNXOPRSTYFOU",
-        u"αάβγδεέζικλμνξοπρσςτυφωυΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΩΘ",
+        u"aabgdeeziklmnxoprsstyfouABGDEZHIKLMNXOPRSTYFO",
+        u"αάβγδεέζικλμνξοπρσςτυφωυΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΩ",
         )
     reversed_specific_mapping = (
         u"αάεέηήιίοόυύωώΑΆΕΈΗΉΙΊΟΌΥΎΩΏ",
         u"aaeeiiiioouuooAAEEIIIIOOUUOO"
     )
     pre_processor_mapping = {
+        u"s": u"σ",
         u"th": u"θ",
         u"ch": u"χ",
         u"ps": u"ψ",
-        u"TH": u"Θ",
-        u"CH": u"Χ",
-        u"PS": u"Ψ",
+        u"Th": u"Θ",
+        u"Ch": u"Χ",
+        u"Ps": u"Ψ",
     }
 
 if not os.environ.get('DATASTORE_LOAD'):
