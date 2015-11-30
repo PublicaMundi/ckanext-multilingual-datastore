@@ -52,6 +52,24 @@
         </div>
         {% block resource_content %}
         {{ super() }}
+        <div class="legend">
+            <span class="title">{{ _('Legend')}}:</span>
+            <span class="samples">
+
+                <span class="color sample translatable-field column-no-translate"></span>
+                <span class="description" title="{{ _('The field is set as non translatable')}}">{{_('Non translatable')}}</span>
+                
+                <span class="color sample translatable-field column-manual"></span>
+                <span class="description" title="{{_('Field translation mode is set to manual')}}">{{_('Manual')}}</span>
+                
+                <span class="color sample translatable-field column-automatic"></span>
+                <span class="description" title="{{_('Field translation mode is set to automatic (from INSPIRE-compliant vocabularies)')}}">{{_('Automatic')}}</span>
+                <span class="color sample translatable-field column-transcription"></span>
+                <span class="description" title="{{_('Field translation mode is set to transcription')}}">{{_('Transcription')}}</span>
+            </span>
+        </span>
+
+        </div>
         {% endblock %}
         <iframe src="{{ h.url_for(controller='ckanext.multilingual_datastore.controllers.resource:ResourceController', action='resource_datapreview', resource_id=resource_id, id=name_or_id, language=language) }}" frameborder="0" width="100%" height="100%" style="min-height:450px"  data-module="data-viewer">
         <p>{{ _('Your browser does not support iframes.') }}</p>
@@ -63,4 +81,8 @@
 {% endblock %}
 
 
+{% block styles %}
+{{ super() }}
+{% resource 'ckanext-multilingual_datastore/style' %}
+{% endblock %}
   
