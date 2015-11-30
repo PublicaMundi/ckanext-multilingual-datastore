@@ -1,0 +1,42 @@
+/* Translation columns */
+
+.column-default{
+    //background-color: #fff;
+}
+.column-no-translate{
+    background-color: #e2576b !important;
+}
+.column-manual{
+    background-color: #7ccb66 !important;
+}
+.column-automatic{
+    background-color: #e9e580 !important;
+}
+.column-transcription{
+    background-color: #6691d8 !important;
+}
+
+/* Legend */
+
+div.legend {
+    margin: 12px 0px 0px 0px;
+    font-size: 12px;
+    color: #777;
+} 
+
+div.legend .title {
+    padding: 0px 15px 0px 0px;
+    font-weight: bold;
+}
+div.legend .samples > .color {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: text-top;
+    border: solid #777 1px;
+}
+
+div.legend .samples > .description {
+    padding-right: 15px;
+    padding-left: 1px;
+}
