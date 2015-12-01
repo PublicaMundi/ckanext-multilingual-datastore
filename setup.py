@@ -25,4 +25,11 @@ setup(
     [ckan.plugins]
     multilingual_datastore=ckanext.multilingual_datastore.plugin:MultilingualDatastore
     """,
+    message_extractors = {
+        'ckanext/multilingual_datastore': [
+            ('**.py', 'python', None),
+            ('**.html', 'ckan', None),
+            ('**.js', 'javascript', None),
+        ]
+    }
 )

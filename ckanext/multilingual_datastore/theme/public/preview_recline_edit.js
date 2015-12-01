@@ -9,7 +9,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
     options: {
       i18n: {
         heading: _("Please Confirm Action"),
-        datastore_disabled: _("Datastore is disabled. Please enable datastore and try again in order to proceed with resourcer translationm"),
+        datastore_disabled: _("Datastore is disabled. Please enable datastore and try again in order to proceed with resource translation"),
         confirm_delete: _("Are you sure you want to delete column translation?"),
         confirm_update: _("Are you sure you want to update existing column translation?"),
         confirm_publish: _("Are you sure you want to publish resource translation?"),

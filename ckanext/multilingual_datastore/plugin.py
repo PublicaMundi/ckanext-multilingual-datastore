@@ -45,10 +45,8 @@ class MultilingualDatastore(p.SingletonPlugin):
 
     def get_helpers(self):
         return {
-                #'resource_edit': resource_edit,
                 'get_resource_languages': self.get_resource_languages,
-                'get_orig_language': self.get_orig_language,
-                #'get_translation_resource': self.get_translation_resource,
+                'get_orig_locale': self.get_orig_locale,
                 'get_language_translation_status': self.get_language_translation_status
                 }
 
@@ -213,10 +211,12 @@ class MultilingualDatastore(p.SingletonPlugin):
         orig_lang = res.get('language', res_lang)
         return orig_lang
 
-        #available_locales = i18n.get_available_locales()
-        #for locale in available_locales:
-        #    if locale == orig_lang:
-        #        return locale
+    def get_orig_locale(self, res):
+        orig_lang = self.get_orig_language(res)
+        available_locales = i18n.get_available_locales()
+        for locale in available_locales:
+            if locale == orig_lang:
+                return locale
  
     def get_auth_functions(self):
         return {
