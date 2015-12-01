@@ -49,8 +49,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
       // hack to make leaflet use a particular location to look for images
       //this.button = jQuery("#button");
       //var html = '<a href="#" class="btn" id="saveClicked">Save</a> <a href="#" class="btn btn-primary" id="publishClicked">Publish</a>';
-      console.log('GELLO');
-      console.log($('#field-package-name').data('package-name'));
       this.save_btn = jQuery("#saveClicked");
       this.publish_btn = jQuery("#publishClicked");
       this.el.ready(this._onReady);
@@ -108,7 +106,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
         // CKAN DataStore)
         //resourceData.endpoint = jQuery('body').data('site-root') + 'api';
         resourceData.endpoint = this.options.site_url + 'api';
-        console.log(resourceData); 
         resourceData.translation_language = lang;
          
         var dataset = new recline.Model.Dataset(resourceData);
@@ -134,7 +131,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
         }
         else if (res_trans_id === undefined  && !("translation_resource" in resourceData)){
             
-            console.log("NEW TRANSLATION");
+            //console.log("NEW TRANSLATION");
             var transResource = translate.create(function() {}, function() { 
             var translations = {};
                 try{
@@ -152,7 +149,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
             });
         }
         else{
-            console.log("PREVIOUS TRANSLATION");
+            //console.log("PREVIOUS TRANSLATION");
             var translationResource = null;
             this.initializeDataset(dataset, resourceData);
         }
@@ -208,7 +205,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                 });
     
                 dataset.bind('translate-title', function(col){
-                    console.log(col);
                     var options = {column:col.id, translation: col.translation, mode:'title'};
                     self.updateWithConfirmation(dataset, options); 
                 });
@@ -220,7 +216,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                 });
 
                 self.save_btn.click(function() {
-                    //console.log('dataset being saved...');
                     dataset.save();
                     dataExplorer.notify({message: 'Loading', loader:true, category: 'warning', persist: false});
                 });
@@ -242,9 +237,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
         //  });
     },
     _onSuccess: function(e) {
-        console.log('ae');
-        console.log(e);
-        console.log(this);
     },
     getTransSuffix: function(lang){
         return '-' + lang;
@@ -346,8 +338,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                     this.options.cb = cb;
 
                     this.confirmTitle(options.column);
-                    console.log(dataset);
-                   console.log(options); 
                    if (options.translation){
                         $('.inputTitleTrans').val(options.translation);
                    }
@@ -401,8 +391,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
       });
     },
     confirmTitle: function(text) {
-        console.log('confirm title');
-        console.log(this.modal);
         this.sandbox.body.append(this.createModalFromTemplate(text));
         this.modal.modal('show');
        // Center the modal in the middle of the screen.
@@ -444,8 +432,6 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
         var options = this.options.options;
         var ld = this.options.ld;
         var cb = this.options.cb;
-        console.log('callback');
-        console.log(cb);   
         this.sandbox.body.append(h[action](options, ld, cb));
       this.modal.modal('hide');
     },

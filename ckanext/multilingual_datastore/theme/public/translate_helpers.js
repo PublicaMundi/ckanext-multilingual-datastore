@@ -13,8 +13,6 @@ function TranslateHelper (resource, lang){
     };
 
     this.create = function(ld, cb) {
-        console.log('creating..');
-        console.log(resource);
         var url = resource.endpoint + '/3/action/resource_translation_create';
         
         //var package_id = this._strip_package_id(resource.url);
@@ -35,8 +33,8 @@ function TranslateHelper (resource, lang){
 
         var mode = options.mode; 
         var title_trans = options.title_trans;
-        console.log('updating..');
-        console.log(title_trans);
+        //console.log('updating..');
+        //console.log(title_trans);
         var self = this;
         var url = resource.endpoint + '/3/action/resource_translation_update';
         
@@ -52,8 +50,6 @@ function TranslateHelper (resource, lang){
         //var new_res_id = translations[lang];
         
         var res = {endpoint:resource.endpoint, id:resource.id};
-        console.log('RESOURECE');
-        console.log(res); 
         var options = {
                     resource_id: resource.id,
                     language: lang,
@@ -68,9 +64,8 @@ function TranslateHelper (resource, lang){
         var options = options || {};
         var col_name = options.column;
 
-        console.log('deleting..');
-        console.log(resource);
-        console.log(col_name);
+        //console.log('deleting..');
+        //console.log(resource);
         var self = this;
 
         var url = resource.endpoint + '/3/action/resource_translation_delete';
@@ -104,8 +99,8 @@ function TranslateHelper (resource, lang){
     };
 
     this.publish = function(options, ld, cb) {
-        console.log('publishing..');
-        console.log(resource);
+        //console.log('publishing..');
+        //console.log(resource);
         var url = resource.endpoint + '/3/action/resource_translation_publish';
         /*
         var translations = {};
@@ -122,15 +117,12 @@ function TranslateHelper (resource, lang){
             resource_id:resource.id,
             language: lang
         }
-        console.log('before calling ajax');
-        console.log(ld);
-        console.log(cb);
         return this.call_ajax(url, options, ld, cb);    
     };
 
     this.unpublish = function(options, ld, cb) {
-        console.log('unpublishing..');
-        console.log(resource);
+        //console.log('unpublishing..');
+        //console.log(resource);
         var url = resource.endpoint + '/3/action/resource_translation_unpublish';
         /*
         var translations = {};
@@ -151,8 +143,8 @@ function TranslateHelper (resource, lang){
     };
 
     this.show =  function(resource, cb) {
-        console.log('showing..');
-        console.log(resource.id);
+        //console.log('showing..');
+        //console.log(resource.id);
 
         var url = resource.endpoint + '/3/action/datastore_search';
         
@@ -170,8 +162,8 @@ function TranslateHelper (resource, lang){
     },
 
     this.show_resource =  function(resource, cb) {
-        console.log('showing..');
-        console.log(resource.id);
+        //console.log('showing..');
+        //console.log(resource.id);
 
         var url = resource.endpoint + '/3/action/resource_show';
         var options = {
@@ -197,12 +189,8 @@ function TranslateHelper (resource, lang){
             beforeSend: ld,
             complete: cb,
             success: function(response) {
-                console.log('succeeded');
-                console.log(response);
             },
             failure: function(response) {
-                console.log('failed');
-                console.log(response);
             },
             error: function(response) {
                 //if (response.status == 409){

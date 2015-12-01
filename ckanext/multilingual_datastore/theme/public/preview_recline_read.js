@@ -60,8 +60,6 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
 
       var errorMsg, dataset;
       var lang = this.options.language;
-        console.log('lang');
-        console.log(lang);
       if (resourceData.datastore_active) {
         
         translate = new TranslateHelper(resourceData, lang); 
@@ -73,8 +71,6 @@ this.ckan.module('recline_translate_read_preview', function (jQuery, _) {
         catch(err) {
             trans_lang = null; 
         }
-        console.log('trasn');
-        console.log(trans_lang);
   
          if (trans_lang){
             resourceData.translation_language = lang;

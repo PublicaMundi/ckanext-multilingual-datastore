@@ -3142,7 +3142,6 @@ my.GridRow = Backbone.View.extend({
   ',
 
   onEditClick: function(e) {
-      //console.log('edit click?');
     var editing = this.el.find('.data-table-cell-editor-editor');
     if (editing.length > 0) {
       editing.parents('.data-table-cell-value').html(editing.text()).siblings('.data-table-cell-edit').removeClass("hidden");
@@ -4187,7 +4186,6 @@ my.MultiView = Backbone.View.extend({
   },
   _onTranslateClick: function(e){
     e.preventDefault();
-    //console.log('Translate button clicked!');
     if (this.mode == "default"){
         this.mode = "translate";
     }
@@ -4476,7 +4474,6 @@ my.SlickGrid = Backbone.View.extend({
     if (!this.grid) {
       return;
     }
-    //console.log(record);
     // Let's find the row corresponding to the index
     var row_index = this.grid.getData().getModelRow( record );
     this.grid.invalidateRow(row_index);
@@ -4534,7 +4531,6 @@ my.SlickGrid = Backbone.View.extend({
 
     var sortable = true;
     if (typeof(field.sortable) !== 'undefined'){
-        console.log('in here');
         sortable = field.sortable;
     }
     /*
@@ -4691,11 +4687,8 @@ my.SlickGrid = Backbone.View.extend({
     this.grid.onCellChange.subscribe(function (e, args) {
       // We need to change the model associated value
       //
-      ////console.log(args);
       var grid = args.grid;
       var model = data.getModel(args.row);
-      //console.log(model);
-      //console.log('after model');
       var field = grid.getColumns()[args.cell].id;
       var v = {};
       v[field] = args.item[field];
@@ -4958,10 +4951,7 @@ my.SlickGrid = Backbone.View.extend({
     }
 
     function updateColumn(e) {
-      //console.log('update column');
       var checkbox;
-      //console.log(column);
-      //console.log(columns);
       if ($(e.target).data('option') === 'autoresize') {
         var checked;
         if ($(e.target).is('li')){
@@ -5700,7 +5690,6 @@ my.Pager = Backbone.View.extend({
     this.render();
   },
   onFormSubmit: function(e) {
-      console.log('onformsubmit');
     e.preventDefault();
     var newFrom = parseInt(this.el.find('input[name="from"]').val());
     var newSize = parseInt(this.el.find('input[name="to"]').val()) - newFrom;
@@ -5710,7 +5699,6 @@ my.Pager = Backbone.View.extend({
     this.model.trigger('save');
   },
   onPaginationUpdate: function(e) {
-    console.log('onppagination update');
     e.preventDefault();
     var $el = $(e.target);
     var newFrom = 0;
@@ -5721,9 +5709,7 @@ my.Pager = Backbone.View.extend({
     }
     newFrom = Math.max(newFrom, 0);
     this.model.set({from: newFrom});
-    console.log('model!');
     this.model.trigger('save');
-    console.log(this);
   },
   render: function() {
     var tmplData = this.model.toJSON();

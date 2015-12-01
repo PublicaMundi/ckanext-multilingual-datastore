@@ -38,7 +38,6 @@ if (isNodeModule) {
   //
   // Primarily for use by Recline backend below
   my.Client.prototype.datastoreQueryTrans = function(queryObj, cb) {
-    console.log('FETCHING'); 
     var actualQuery = my._normalizeQuery(queryObj);
     var lang = queryObj.translation_language;
     
@@ -70,7 +69,7 @@ if (isNodeModule) {
                 ); 
             }
             catch(err) {
-               console.log('ERROR');
+               console.log('error');
               console.log(err); 
             }
     //queryObj.translation_columns = translation_columns;
@@ -107,8 +106,6 @@ if (isNodeModule) {
             field.label += ' (' + lang +')';
         }
 
-        console.log('field');
-        console.log(field);
         return field;
 
       });
@@ -154,20 +151,15 @@ if (isNodeModule) {
 
   my.Client.prototype.datastoreUpdate = function(queryObj, cb) {
     var actualQuery = my._normalizeQuery(queryObj);
-    console.log('queryObj');
-   console.log(queryObj); 
     actualQuery['method'] = 'upsert';
     actualQuery['allow_update_with_id'] = true;
     actualQuery['force'] = true;
     var updates = queryObj.updates;
-    console.log('QueryObj');
-    console.log(queryObj);
     actualQuery['resource_id'] = queryObj.translation_resource;
     var records = [];
     var extra = '-' + queryObj.translation_language;
     var new_updates = [];
     updates.forEach(function(upd, idx){
-        console.log(upd);
         var it = {};
         it['_id'] = upd['_id'];
         for (key in upd){
@@ -180,8 +172,6 @@ if (isNodeModule) {
         new_updates.push(it);
     });
     actualQuery['records'] = new_updates;
-    console.log('Actualquery');
-    console.log(actualQuery);
     this.action('datastore_upsert', actualQuery, function(err, results) {
       if (err) {
         cb(err);
@@ -392,8 +382,6 @@ recline.Backend.CkanTranslateEdit = recline.Backend.CkanTranslateEdit || {};
   // ### fetch
   my.fetch = function(dataset) {
     var dfd = new Deferred();
-    console.log('hereo');
-    console.log(dataset);
 
     my.query({}, dataset)
       .done(function(data) {
@@ -427,8 +415,6 @@ recline.Backend.CkanTranslateEdit = recline.Backend.CkanTranslateEdit || {};
       dataset.id = out.resource_id;
       wrapper = new CKAN.Client(out.endpoint);
     }
-    console.log('dataset');
-    console.log(dataset);
     queryObj.resource_id = dataset.id;
     
     //queryObj.translation_column = dataset.translation_column;
@@ -465,17 +451,12 @@ recline.Backend.CkanTranslateEdit = recline.Backend.CkanTranslateEdit || {};
         dfd.resolve(out);
 
       }
-      console.log('hey im done');
-      console.log(err);
-      console.log(out);
     });
     return dfd.promise();
   };
 
   my.save = function(queryObj, dataset) {
       var dfd = new Deferred(), wrapper;
-      console.log('dfd');
-      console.log(dfd);
       if (dataset.endpoint) {
           wrapper = new CKAN.Client(dataset.endpoint);
       }
