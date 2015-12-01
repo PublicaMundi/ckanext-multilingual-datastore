@@ -1,7 +1,7 @@
 /* Translation columns */
 
 .column-default{
-    //background-color: #fff;
+    background: #e6e6e6 !important;
 }
 .column-no-translate{
     background-color: #e2576b !important;
