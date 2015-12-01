@@ -196,8 +196,6 @@ class MultilingualDatastore(p.SingletonPlugin):
         orig_lang = self.get_orig_language(res)
         if not orig_lang:
             return None
-        #return 
-        #json.loads(res.get('has_translations','u{'+orig_lang+'}'))
         translations = json.loads(res.get('has_translations', '{}'))
         context = self._get_context()
         published_langs = [orig_lang]
@@ -211,13 +209,14 @@ class MultilingualDatastore(p.SingletonPlugin):
         return 'el'
 
     def get_orig_language(self, res):
-        available_locales = i18n.get_available_locales()
-
         res_lang = self._decide_language(res)
         orig_lang = res.get('language', res_lang)
-        for locale in available_locales:
-            if locale == orig_lang:
-                return locale
+        return orig_lang
+
+        #available_locales = i18n.get_available_locales()
+        #for locale in available_locales:
+        #    if locale == orig_lang:
+        #        return locale
  
     def get_auth_functions(self):
         return {

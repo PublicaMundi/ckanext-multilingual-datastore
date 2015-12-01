@@ -4,19 +4,14 @@
 {% set pkg = c.package %}
 {% set translation_resource = res.translation_resource or False %}
 {% set languages = h.get_resource_languages(res) %}
-
+{% set lang = h.lang() if h.lang() in languages else res.language %}
 {% block resource_read_title %}
+
 <h1 class="page-heading">{{ h.resource_display_name(res) | truncate(50) }}
 <ul class="dataset-resources unstyled" style="display:inline-block">
-{% if languages and h.lang() in languages %}
-<li><a class="label" style="vertical-align: middle; margin:0">{{ h.lang()|upper }}</a></li>
-{% else %}
-<li><a class="label" style="vertical-align: middle; margin:0">{{ res.resource_language|upper }}</a></li>
-{% endif %}
+<li><a class="label" style="vertical-align: middle; margin:0">{{ lang|upper }}</a></li>
 </ul>
 </h1>
 {% endblock %}
-{% block resource_actions_inner %}
-{{ super() }}
-{% endblock %}
+
           

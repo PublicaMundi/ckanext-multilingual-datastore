@@ -227,6 +227,9 @@ def resource_translation_update(context, data_dict):
         if mode == 'manual':
             return _update_column(context, res, col_name, original_ds, ds, mode, lambda l:'')
         elif mode == 'automatic':
+            #hack to allow CKAN english translations
+            if language == 'en':
+                language = 'en_GB'
             i18n.set_lang(language)
             return _update_column(context, res, col_name, original_ds, ds, mode, _)
         elif mode == 'transcription':

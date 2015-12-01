@@ -205,6 +205,7 @@ this.ckan.module('recline_translate_edit_preview', function (jQuery, _) {
                 });
     
                 dataset.bind('translate-title', function(col){
+                    dataset.save();
                     var options = {column:col.id, translation: col.translation, mode:'title'};
                     self.updateWithConfirmation(dataset, options); 
                 });
