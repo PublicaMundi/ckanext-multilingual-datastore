@@ -8,9 +8,12 @@
 {% block resource_read_title %}
 
 <h1 class="page-heading">{{ h.resource_display_name(res) | truncate(50) }}
-<ul class="dataset-resources unstyled" style="display:inline-block">
+    
+ {% if res.format == 'csv' or res.format == 'xls' or res.format == 'shapefile' %} 
+    <ul class="dataset-resources unstyled" style="display:inline-block">
 <li><a class="label" style="vertical-align: middle; margin:0">{{ lang|upper }}</a></li>
 </ul>
+{% endif %}
 </h1>
 {% endblock %}
 
