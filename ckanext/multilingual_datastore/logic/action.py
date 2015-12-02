@@ -22,6 +22,8 @@ from ckan.common import _
 
 import ckanext.multilingual_datastore.logic.schema as dsschema
 
+from ckanext.multilingual_datastore import reference_data
+
 
 
 PAGE_STEP = int(pylons.config.get('ckanext.multilingual_datastore.resources.page_step', 100))
@@ -221,22 +223,11 @@ def resource_translation_update(context, data_dict):
         _update_title(context, res, col_name, title_translation)
 
     if mode == 'title':
-        return True
+        pass
     else:
         _assert_column_or_initialize(context, col_name, ds)
-        if mode == 'manual':
-            return _update_column(context, res, col_name, original_ds, ds, mode, lambda l:'')
-        elif mode == 'automatic':
-            #hack to allow CKAN english translations
-            if language == 'en':
-                language = 'en_GB'
-            i18n.set_lang(language)
-            return _update_column(context, res, col_name, original_ds, ds, mode, _)
-        elif mode == 'transcription':
-            registry.register(GreekLanguagePack)
-            return _update_column(context, res, col_name, original_ds, ds, mode, _transcript_string)
-        else:
-            log.info('Should never reach here')
+        _update_column(context, original_res, res, col_name, original_ds, ds, mode)
+    
     return True
 
 def resource_translation_delete(context, data_dict):
@@ -903,12 +894,29 @@ def _update_title(context, res, col_name, title_translation):
     res = p.toolkit.get_action('resource_update')(context, res)
     return res
 
-def _update_column(context, res, col_name, original_ds, new_ds, mode, fun):
+def _update_column(context, original_res, res, col_name, original_ds, new_ds, mode):
     # TODO: Need to json serialize context and data_dict
     res_id = original_ds.get('resource_id')
     total = original_ds.get('total')
     columns = json.loads(res.get('translation_columns_status','{}'))
     
+    if mode == 'automatic':
+        #load dictionaries
+        gemet_translations = {}
+        orig_language = original_res.get('language', 'el')
+        language = res.get('language')
+        with open (reference_data.get_path('gemet-translations.json'), 'r') as fp:
+            translations_json = json.load(fp)
+            try:
+                gemet_translations = translations_json.get(orig_language).get(language)
+            except:
+                # translations not found
+                pass
+    elif mode == 'transcription':
+        registry.register(GreekLanguagePack)
+    elif mode == 'manual':
+        pass
+
     offset = 0
     iters = total/PAGE_STEP
     if not (total % PAGE_STEP == 0):
@@ -933,7 +941,12 @@ def _update_column(context, res, col_name, original_ds, new_ds, mode, fun):
             key = col_name
             value = rec.get(key)
 
-            nvalue = fun(value)
+            if mode == 'automatic':
+                nvalue = _translate_from_gemet(value, dictionary=gemet_translations)
+            elif mode == 'transcription':
+                nvalue = _transcript_string(value, 'el_EL')
+            elif mode == 'manual':
+                nvalue = ''
 
             trec.update({key:nvalue})
             nrecs.append(trec) 
@@ -958,9 +971,13 @@ def _update_column(context, res, col_name, original_ds, new_ds, mode, fun):
 
     return new_ds
 
-def _transcript_string(value):
-    return translit(value, 'el_EL', reversed=True)
+def _transcript_string(value, language):
+    return translit(value, language, reversed=True)
 
+def _translate_from_gemet(value, dictionary=None):
+    if not dictionary:
+        return
+    return dictionary.get(value)
 def _assert_column_or_initialize(context, col_name, ds):
     fields = ds.get('fields')
     # Remove _id from fields list
