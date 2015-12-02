@@ -4,8 +4,7 @@
 # ckanext-multilingual_datastore project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
 #
-msgid ""
-msgstr ""
+
 "Project-Id-Version: ckanext-multilingual_datastore 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2015-12-01 22:43+0200\n"
